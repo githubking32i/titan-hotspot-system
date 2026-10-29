@@ -1,5 +1,9 @@
 # ⚡ TITAN Hotspot & Payment Gateway (Next-Gen Wi-Fi Captive Portal)
 
+<p align="center">
+  <img src="TITAN_Hotspot_Promo_Banner.jpg" alt="TITAN Hotspot Banner" width="100%" />
+</p>
+
 > **সম্পূর্ণ স্বয়ংক্রিয়, ক্লাউড-নিয়ন্ত্রিত, ডুয়াল-ব্যান্ড Wi-Fi 6 হটস্পট বিলিং ও ম্যানেজমেন্ট সিস্টেম।**
 > তৈরি করা হয়েছে **IMOU HX21 (ImmortalWrt / OpenWrt)**, **Cloudflare Workers (Edge Serverless)**, **Cloudflare D1 (SQL)** এবং **অ্যান্ড্রয়েড ১৬ সাপোর্টেড নেটিভ মোবাইল অ্যাপ** সমন্বয়ে।
 
