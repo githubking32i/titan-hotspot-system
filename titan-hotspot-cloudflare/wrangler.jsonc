@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "titan-hotspot",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-28",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "titan-hotspot-db",
+      "database_id": "7821a0db-0c92-4cda-8e30-bf7b1cd1df52"
+    }
+  ],
+  "vars": {
+    "ADMIN_TOKEN": "titan_admin_secret_2026",
+    "ROUTER_SECRET": "titan_router_secret_2026",
+    "SMS_SECRET": "titan_sms_secret_2026"
+  }
+}

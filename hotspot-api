@@ -1,0 +1,72 @@
+#!/bin/sh
+echo "Content-Type: application/json"
+echo "Access-Control-Allow-Origin: *"
+echo "Access-Control-Allow-Methods: GET, POST, OPTIONS"
+echo "Access-Control-Allow-Headers: Content-Type"
+echo ""
+
+if [ "$REQUEST_METHOD" = "OPTIONS" ]; then
+    exit 0
+fi
+
+if [ "$REQUEST_METHOD" = "POST" ]; then
+    read -r POST_DATA
+    ACTION=""
+    MAC=""
+    MINUTES=""
+    if command -v jsonfilter >/dev/null 2>&1; then
+        ACTION=$(echo "$POST_DATA" | jsonfilter -e '@.action' 2>/dev/null)
+        MAC=$(echo "$POST_DATA" | jsonfilter -e '@.mac' 2>/dev/null)
+        MINUTES=$(echo "$POST_DATA" | jsonfilter -e '@.minutes' 2>/dev/null)
+    fi
+
+    if [ "$ACTION" = "auth" ] && [ -n "$MAC" ]; then
+        [ -z "$MINUTES" ] && MINUTES=120
+        ndsctl auth "$MAC" "$MINUTES" >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"MAC $MAC authorized for $MINUTES minutes\"}"
+        exit 0
+    elif [ "$ACTION" = "deauth" ] && [ -n "$MAC" ]; then
+        ndsctl deauth "$MAC" >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"MAC $MAC deauthenticated\"}"
+        exit 0
+    elif [ "$ACTION" = "trust" ] && [ -n "$MAC" ]; then
+        ndsctl trust "$MAC" >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"MAC $MAC added to trusted list\"}"
+        exit 0
+    elif [ "$ACTION" = "untrust" ] && [ -n "$MAC" ]; then
+        ndsctl untrust "$MAC" >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"MAC $MAC removed from trusted list\"}"
+        exit 0
+    elif [ "$ACTION" = "restart_daemon" ]; then
+        /etc/init.d/titan-hotspot restart >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"Hotspot daemon restarted\"}"
+        exit 0
+    elif [ "$ACTION" = "restart_nds" ]; then
+        /etc/init.d/opennds restart >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"OpenNDS restarted\"}"
+        exit 0
+    fi
+fi
+
+UPTIME=$(uptime | awk -F',  ' '{print $1}' | awk '{print $3,$4}')
+LOAD=$(uptime | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//')
+DAEMON_RUNNING=false
+if /etc/init.d/titan-hotspot status 2>/dev/null | grep -q "running"; then
+    DAEMON_RUNNING=true
+fi
+
+NDS_JSON=$(ndsctl json 2>/dev/null)
+[ -z "$NDS_JSON" ] && NDS_JSON="{}"
+
+INVOICES_JSON=$(curl -s -m 4 -H "Authorization: Bearer titan_admin_secret_2026" "https://titan-hotspot.titano.workers.dev/admin/invoices" 2>/dev/null)
+[ -z "$INVOICES_JSON" ] && INVOICES_JSON="[]"
+
+cat << EOF
+{
+  "uptime": "$UPTIME",
+  "load": "$LOAD",
+  "daemon_running": $DAEMON_RUNNING,
+  "nds_clients": $NDS_JSON,
+  "invoices": $INVOICES_JSON
+}
+EOF

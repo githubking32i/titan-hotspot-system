@@ -1,0 +1,9 @@
+# Build artifacts
+.gradle/
+build/
+**/build/
+*.log
+local.properties
+.wrangler/
+*.png
+!app_logo.png

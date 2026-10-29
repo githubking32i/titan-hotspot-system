@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TITAN Hotspot — Admin Control Panel</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(26, 34, 52, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+      color: var(--text);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      padding: 24px 16px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-badge {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .logo-text h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-text p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--card-border);
+      color: var(--text);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .stat-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .stat-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Section Cards */
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .section-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--card-border);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-info {
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    /* Action bar */
+    .quick-grant {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto;
+      gap: 12px;
+      align-items: end;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 14px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .input-control {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 0.88rem;
+      font-family: inherit;
+    }
+    .input-control:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      padding: 12px 20px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      font-size: 0.9rem;
+      color: white;
+      display: none;
+      z-index: 9999;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .code-pill {
+      font-family: monospace;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      color: #93c5fd;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo-section">
+        <div class="logo-badge">⚡</div>
+        <div class="logo-text">
+          <h1>TITAN HOTSPOT — Admin Control</h1>
+          <p>IMOU HX21 ImmortalWrt & Cloudflare Worker Integration</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="refreshTimer" style="font-size: 0.8rem; color: var(--text-muted);">Auto-refreshing in 5s</span>
+        <button class="btn btn-secondary" onclick="fetchData()">🔄 রিলোড (Refresh)</button>
+        <button class="btn btn-secondary" onclick="restartDaemon()">⚙️ ডেমন রিস্টার্ট</button>
+      </div>
+    </header>
+
+    <!-- Key Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">🟢 একটিভ গ্রাহক (Active Online)</span>
+        <span class="stat-val" id="statActiveUsers">0</span>
+        <span class="stat-desc">বর্তমানে ওয়াইফাই ব্যবহার করছেন</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">📋 মোট সাবস্ক্রিপশন (Total Paid)</span>
+        <span class="stat-val" id="statTotalVouchers">0</span>
+        <span class="stat-desc">সফলভাবে ভেরিফাইড ভাউচার</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">💰 মোট আয় (Total Revenue)</span>
+        <span class="stat-val" id="statRevenue">৳0</span>
+        <span class="stat-desc">bKash / Nagad অটো পেমেন্ট</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">⚡ রাউটার ডেমন (Status)</span>
+        <span class="stat-val" id="statDaemon" style="font-size: 1.3rem; margin-top: 6px;">পরীক্ষা হচ্ছে...</span>
+        <span class="stat-desc" id="statUptime">Uptime: --</span>
+      </div>
+    </div>
+
+    <!-- Active Connected WiFi Devices -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">
+          <span>📡</span> লাইভ কানেক্টেড ওয়াইফাই ডিভাইস (Live WiFi Clients)
+        </div>
+        <span class="badge badge-info" id="clientCountBadge">0 Clients</span>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>MAC Address</th>
+              <th>IP Address</th>
+              <th>স্ট্যাটাস (OpenNDS)</th>
+              <th>ব্যবহার (Download/Upload)</th>
+              <th>অ্যাকশন (Actions)</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTableBody">
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">তথ্য লোড হচ্ছে...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Quick Grant Pass Box -->
+      <div class="quick-grant">
+        <div class="input-group">
+          <label>ডিভাইস MAC Address</label>
+          <input type="text" id="quickMac" class="input-control" placeholder="যেমন: 9a:d0:17:fe:94:e2">
+        </div>
+        <div class="input-group">
+          <label>মেয়াদ (মিনিট)</label>
+          <input type="number" id="quickMinutes" class="input-control" value="120" min="5" step="15">
+        </div>
+        <button class="btn btn-primary" onclick="quickGrantAuth()">⚡ ইন্টারনেট পারমিশন দিন</button>
+      </div>
+    </div>
+
+    <!-- Cloudflare Invoices & Customer Time Balance -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">
+          <span>🧾</span> গ্রাহকের সাবস্ক্রিপশন ও অবশিষ্ট সময় (Invoices & Balance)
+        </div>
+        <span class="badge badge-success" id="invoiceCountBadge">0 Invoices</span>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ইনভয়েস / TrxID</th>
+              <th>গ্রাহকের ফোন ও MAC</th>
+              <th>প্যাকেজ ও টাকা</th>
+              <th>অবশিষ্ট সময় (Remaining)</th>
+              <th>কানেকশন অবস্থা</th>
+              <th>অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="invoicesTableBody">
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">তথ্য লোড হচ্ছে...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer System Actions -->
+    <div class="section-card" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
+      <div>
+        <div style="font-weight: 700; font-size: 0.95rem;">সিস্টেম সার্ভিস কন্ট্রোল (Quick Actions)</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">ক্যাপটিভ পোর্টাল বা অটোমেশন স্ক্রিপ্ট সমস্যা করলে এখান থেকে রিস্টার্ট করুন</div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary" onclick="restartDaemon()">🔄 হটস্পট ডেমন রিস্টার্ট</button>
+        <button class="btn btn-secondary" onclick="restartNds()">🌐 OpenNDS রিস্টার্ট</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast">মেসেজ</div>
+
+  <script>
+    let refreshSec = 5;
+    let refreshInterval = null;
+
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.style.borderColor = isError ? 'var(--danger)' : 'var(--success)';
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3500);
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes == 0) return '0 KB';
+      const k = 1024;
+      const sizes = ['KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + (sizes[i] || 'KB');
+    }
+
+    function formatRemaining(totalMins, usedSecs) {
+      const totalSecs = (totalMins || 0) * 60;
+      const remSecs = Math.max(0, totalSecs - (usedSecs || 0));
+      if (remSecs <= 0) return '⌛ মেয়াদ শেষ';
+      
+      const days = Math.floor(remSecs / 86400);
+      const hours = Math.floor((remSecs % 86400) / 3600);
+      const mins = Math.floor((remSecs % 3600) / 60);
+
+      let parts = [];
+      if (days > 0) parts.push(days + 'দিন');
+      if (hours > 0) parts.push(hours + 'ঘণ্টা');
+      parts.push(mins + 'মি');
+      return parts.join(' ');
+    }
+
+    async function sendApi(action, payload = {}) {
+      try {
+        const res = await fetch('/cgi-bin/hotspot-api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, ...payload })
+        });
+        const data = await res.json();
+        return data;
+      } catch (e) {
+        console.error(e);
+        return { success: false, message: 'নেটওয়ার্ক ত্রুটি' };
+      }
+    }
+
+    async function authMac(mac, minutes) {
+      showToast(`MAC ${mac} অনুমোদিত করা হচ্ছে...`);
+      const res = await sendApi('auth', { mac, minutes });
+      showToast(res.message || 'সম্পন্ন হয়েছে');
+      fetchData();
+    }
+
+    async function deauthMac(mac) {
+      if (!confirm(`আপনি কি নিশ্চিতভাবে ${mac} ডিভাইসটিকে ডিসকানেক্ট করতে চান?`)) return;
+      showToast(`MAC ${mac} ডিসকানেক্ট করা হচ্ছে...`);
+      const res = await sendApi('deauth', { mac });
+      showToast(res.message || 'ডিসকানেক্ট করা হয়েছে');
+      fetchData();
+    }
+
+    async function restartDaemon() {
+      showToast('ডেমন রিস্টার্ট হচ্ছে...');
+      const res = await sendApi('restart_daemon');
+      showToast(res.message || 'ডেমন রিস্টার্ট সম্পন্ন');
+      setTimeout(fetchData, 1500);
+    }
+
+    async function restartNds() {
+      showToast('OpenNDS রিস্টার্ট হচ্ছে...');
+      const res = await sendApi('restart_nds');
+      showToast(res.message || 'OpenNDS রিস্টার্ট সম্পন্ন');
+      setTimeout(fetchData, 2000);
+    }
+
+    async function quickGrantAuth() {
+      const mac = document.getElementById('quickMac').value.trim();
+      const mins = parseInt(document.getElementById('quickMinutes').value) || 120;
+      if (!mac) {
+        showToast('অনুগ্রহ করে সঠিক MAC Address দিন', true);
+        return;
+      }
+      await authMac(mac, mins);
+      document.getElementById('quickMac').value = '';
+    }
+
+    function fillQuickMac(mac) {
+      document.getElementById('quickMac').value = mac;
+      window.scrollTo({ top: document.querySelector('.quick-grant').offsetTop - 100, behavior: 'smooth' });
+    }
+
+    async function fetchData() {
+      try {
+        const res = await fetch('/cgi-bin/hotspot-api');
+        const data = await res.json();
+
+        // 1. Daemon & System
+        const daemonEl = document.getElementById('statDaemon');
+        if (data.daemon_running) {
+          daemonEl.innerHTML = '<span style="color: var(--success)">🟢 সচল (Active)</span>';
+        } else {
+          daemonEl.innerHTML = '<span style="color: var(--danger)">🔴 বন্ধ (Stopped)</span>';
+        }
+        document.getElementById('statUptime').innerText = `Uptime: ${data.uptime || '--'} | Load: ${data.load || '--'}`;
+
+        // 2. OpenNDS Clients
+        const ndsClients = data.nds_clients && data.nds_clients.clients ? data.nds_clients.clients : {};
+        const clientMacs = Object.keys(ndsClients);
+        document.getElementById('clientCountBadge').innerText = `${clientMacs.length} Devices`;
+
+        let activeCount = 0;
+        let clientRows = '';
+
+        if (clientMacs.length === 0) {
+          clientRows = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">কোনো ওয়াইফাই ডিভাইস কানেক্টেড নেই</td></tr>';
+        } else {
+          clientMacs.forEach(mac => {
+            const c = ndsClients[mac];
+            const isAuth = (c.state || '').toLowerCase() === 'authenticated';
+            if (isAuth) activeCount++;
+
+            const statusBadge = isAuth 
+              ? '<span class="badge badge-success">🟢 অনুমোদিত (Online)</span>'
+              : '<span class="badge badge-warning">🟡 ক্যাপটিভ লগইন পেজে</span>';
+
+            const dl = formatBytes(parseInt(c.download_this_session) || 0);
+            const ul = formatBytes(parseInt(c.upload_this_session) || 0);
+
+            clientRows += `
+              <tr>
+                <td><span class="code-pill">${c.mac}</span></td>
+                <td><span class="code-pill">${c.ip || '--'}</span></td>
+                <td>${statusBadge}</td>
+                <td>⬇️ ${dl} &nbsp; ⬆️ ${ul}</td>
+                <td>
+                  <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="authMac('${c.mac}', 120)">+২ ঘণ্টা</button>
+                    <button class="btn btn-secondary btn-sm" onclick="authMac('${c.mac}', 1440)">+১ দিন</button>
+                    <button class="btn btn-danger btn-sm" onclick="deauthMac('${c.mac}')">কিক</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          });
+        }
+        document.getElementById('clientsTableBody').innerHTML = clientRows;
+        document.getElementById('statActiveUsers').innerText = activeCount;
+
+        // 3. Cloudflare Invoices
+        const invoices = Array.isArray(data.invoices) ? data.invoices : [];
+        document.getElementById('invoiceCountBadge').innerText = `${invoices.length} টি ইনভয়েস`;
+
+        let completedInvoices = 0;
+        let totalRev = 0;
+        let invoiceRows = '';
+
+        if (invoices.length === 0) {
+          invoiceRows = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">কোনো ইনভয়েস রেকর্ড পাওয়া যায়নি</td></tr>';
+        } else {
+          invoices.forEach(inv => {
+            if (inv.status === 'completed') {
+              completedInvoices++;
+              totalRev += (inv.amount || 0);
+            }
+
+            let connBadge = '';
+            if (inv.is_connected == 1) {
+              connBadge = '<span class="badge badge-success">🟢 ব্যবহার হচ্ছে (টাইম কাউন্ট সচল)</span>';
+            } else if (inv.status === 'completed') {
+              connBadge = '<span class="badge badge-warning">⏸️ ডিসকানেক্টেড (টাইম স্থগিত)</span>';
+            } else {
+              connBadge = `<span class="badge badge-danger">${inv.status}</span>`;
+            }
+
+            const remTime = formatRemaining(inv.duration_minutes, inv.used_seconds);
+
+            invoiceRows += `
+              <tr>
+                <td>
+                  <div style="font-weight: 700;">${inv.id}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">TrxID: <span class="code-pill">${inv.trx_id || 'N/A'}</span></div>
+                </td>
+                <td>
+                  <div>📱 ${inv.customer_phone || 'অজানা'}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">MAC: <span class="code-pill">${inv.client_mac || 'N/A'}</span></div>
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #10b981;">৳${inv.amount} (${(inv.provider || 'bKash').toUpperCase()})</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">${inv.duration_minutes} মিনিট</div>
+                </td>
+                <td>
+                  <span style="font-weight: 600;">${remTime}</span>
+                </td>
+                <td>${connBadge}</td>
+                <td>
+                  ${inv.client_mac ? `<button class="btn btn-secondary btn-sm" onclick="fillQuickMac('${inv.client_mac}')">পাস দিন</button>` : '--'}
+                </td>
+              </tr>
+            `;
+          });
+        }
+
+        document.getElementById('invoicesTableBody').innerHTML = invoiceRows;
+        document.getElementById('statTotalVouchers').innerText = completedInvoices;
+        document.getElementById('statRevenue').innerText = `৳${totalRev}`;
+
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    }
+
+    // Initial load
+    fetchData();
+
+    // Auto-refresh countdown
+    setInterval(() => {
+      refreshSec--;
+      if (refreshSec <= 0) {
+        refreshSec = 5;
+        fetchData();
+      }
+      document.getElementById('refreshTimer').innerText = `Auto-refreshing in ${refreshSec}s`;
+    }, 1000);
+  </script>
+</body>
+</html>

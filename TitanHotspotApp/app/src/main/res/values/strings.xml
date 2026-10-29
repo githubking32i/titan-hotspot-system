@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">TITAN Hotspot Admin</string>
+    <string name="admin_login">অ্যাডমিন প্রবেশ (Login)</string>
+    <string name="enter_pin">অ্যাডমিন পিন দিন</string>
+    <string name="login_hint">ডিফল্ট পিন: 7890</string>
+    <string name="active_users">একটিভ গ্রাহক</string>
+    <string name="total_revenue">মোট আয়</string>
+    <string name="total_vouchers">মোট সাবস্ক্রিপশন</string>
+    <string name="router_status">রাউটার অবস্থা</string>
+    <string name="tab_clients">ওয়াইফাই ক্লায়েন্ট</string>
+    <string name="tab_invoices">গ্রাহকের ইনভয়েস</string>
+    <string name="quick_auth">ইন্টারনেট পারমিশন</string>
+</resources>
