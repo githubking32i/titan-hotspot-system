@@ -205,8 +205,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendRemoteCommand(String action, String mac, int minutes) {
+        sendRemoteCommand(action, mac, minutes, 0, 0);
+    }
+
+    private void sendRemoteCommand(String action, String mac, int minutes, int downRate, int upRate) {
         Toast.makeText(this, "কমান্ড পাঠানো হচ্ছে...", Toast.LENGTH_SHORT).show();
-        ApiClient.sendCommand(adminToken, action, mac, minutes, new ApiClient.ApiCallback<String>() {
+        ApiClient.sendCommand(adminToken, action, mac, minutes, downRate, upRate, new ApiClient.ApiCallback<String>() {
             @Override
             public void onSuccess(String result) {
                 Toast.makeText(MainActivity.this, result, Toast.LENGTH_SHORT).show();

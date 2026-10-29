@@ -20,6 +20,21 @@ public class Models {
         public String state = "";
         public long download_bytes = 0;
         public long upload_bytes = 0;
+        public String down_rate_limit = "";
+        public String up_rate_limit = "";
+
+        public String getSpeedFormatted() {
+            if (down_rate_limit == null || down_rate_limit.isEmpty() || "null".equals(down_rate_limit) || "0".equals(down_rate_limit)) {
+                return "🚀 ফুল স্পিড";
+            }
+            try {
+                int kb = Integer.parseInt(down_rate_limit);
+                double mb = kb / 1024.0;
+                return String.format("⚡ %.0f Mbps", mb);
+            } catch(Exception e) {
+                return "⚡ " + down_rate_limit + "k";
+            }
+        }
 
         public String getTrafficFormatted() {
             return "⬇️ " + formatBytes(download_bytes) + "  •  ⬆️ " + formatBytes(upload_bytes);

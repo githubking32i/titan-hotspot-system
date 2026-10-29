@@ -26,7 +26,11 @@ public class ApiClient {
         if (url != null && !url.trim().isEmpty()) {
             String u = url.trim();
             if (!u.startsWith("http://") && !u.startsWith("https://")) {
-                u = "https://" + u;
+                if (u.startsWith("192.168.") || u.startsWith("10.") || u.startsWith("172.")) {
+                    u = "http://" + u;
+                } else {
+                    u = "https://" + u;
+                }
             }
             if (u.endsWith("/")) {
                 u = u.substring(0, u.length() - 1);
@@ -34,9 +38,10 @@ public class ApiClient {
             baseUrl = u;
         }
     }
+
     private static final OkHttpClient client = new OkHttpClient.Builder()
-            .connectTimeout(12, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(12, TimeUnit.SECONDS)
             .build();
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -48,16 +53,18 @@ public class ApiClient {
     }
 
     public static void fetchDashboard(String token, ApiCallback<Models.DashboardResponse> callback) {
-        Request request = new Request.Builder()
-                .url(baseUrl + "/api/admin/dashboard")
-                .header("Authorization", "Bearer " + token)
-                .get()
-                .build();
+        boolean isLocal = baseUrl.contains("192.168.") || baseUrl.contains(".local");
+        String targetUrl = isLocal ? (baseUrl + "/cgi-bin/hotspot-api") : (baseUrl + "/api/admin/dashboard");
 
-        client.newCall(request).enqueue(new Callback() {
+        Request.Builder reqBuilder = new Request.Builder().url(targetUrl).get();
+        if (!isLocal && token != null && !token.isEmpty()) {
+            reqBuilder.header("Authorization", "Bearer " + token);
+        }
+
+        client.newCall(reqBuilder.build()).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                mainHandler.post(() -> callback.onError("সার্ভারে সংযোগ করা যাচ্ছে না"));
+                mainHandler.post(() -> callback.onError("সার্ভারে সংযোগ করা যাচ্ছে না: " + e.getMessage()));
             }
 
             @Override
@@ -75,7 +82,7 @@ public class ApiClient {
                     String bodyStr = response.body().string();
                     JSONObject json = new JSONObject(bodyStr);
                     Models.DashboardResponse res = new Models.DashboardResponse();
-                    res.success = json.optBoolean("success", false);
+                    res.success = json.optBoolean("success", true);
 
                     if (json.has("stats")) {
                         JSONObject s = json.getJSONObject("stats");
@@ -85,11 +92,15 @@ public class ApiClient {
                         res.stats.router_uptime = s.optString("router_uptime", "--");
                         res.stats.router_load = s.optString("router_load", "--");
                         res.stats.last_heartbeat = s.optString("last_heartbeat", "");
+                    } else if (isLocal || json.has("uptime")) {
+                        res.stats.router_online = json.optBoolean("daemon_running", true);
+                        res.stats.router_uptime = json.optString("uptime", "--");
+                        res.stats.router_load = json.optString("load", "--");
                     }
 
                     if (json.has("nds_clients")) {
-                        JSONObject nds = json.getJSONObject("nds_clients");
-                        if (nds.has("clients")) {
+                        JSONObject nds = json.optJSONObject("nds_clients");
+                        if (nds != null && nds.has("clients")) {
                             JSONObject clientsObj = nds.getJSONObject("clients");
                             Iterator<String> keys = clientsObj.keys();
                             while (keys.hasNext()) {
@@ -101,27 +112,31 @@ public class ApiClient {
                                 ci.state = cObj.optString("state", "");
                                 ci.download_bytes = cObj.optLong("download_this_session", 0);
                                 ci.upload_bytes = cObj.optLong("upload_this_session", 0);
+                                ci.down_rate_limit = cObj.optString("download_rate_limit_threshold", "");
+                                ci.up_rate_limit = cObj.optString("upload_rate_limit_threshold", "");
                                 res.clients.add(ci);
                             }
                         }
                     }
 
                     if (json.has("invoices")) {
-                        JSONArray invs = json.getJSONArray("invoices");
-                        for (int i = 0; i < invs.length(); i++) {
-                            JSONObject io = invs.getJSONObject(i);
-                            Models.InvoiceInfo inv = new Models.InvoiceInfo();
-                            inv.id = io.optString("id", "");
-                            inv.trx_id = io.optString("trx_id", "");
-                            inv.customer_phone = io.optString("customer_phone", "");
-                            inv.client_mac = io.optString("client_mac", "");
-                            inv.amount = io.optInt("amount", 0);
-                            inv.provider = io.optString("provider", "bkash");
-                            inv.status = io.optString("status", "");
-                            inv.duration_minutes = io.optInt("duration_minutes", 120);
-                            inv.used_seconds = io.optInt("used_seconds", 0);
-                            inv.is_connected = io.optInt("is_connected", 0);
-                            res.invoices.add(inv);
+                        JSONArray invs = json.optJSONArray("invoices");
+                        if (invs != null) {
+                            for (int i = 0; i < invs.length(); i++) {
+                                JSONObject io = invs.getJSONObject(i);
+                                Models.InvoiceInfo inv = new Models.InvoiceInfo();
+                                inv.id = io.optString("id", "");
+                                inv.trx_id = io.optString("trx_id", "");
+                                inv.customer_phone = io.optString("customer_phone", "");
+                                inv.client_mac = io.optString("client_mac", "");
+                                inv.amount = io.optInt("amount", 0);
+                                inv.provider = io.optString("provider", "bkash");
+                                inv.status = io.optString("status", "");
+                                inv.duration_minutes = io.optInt("duration_minutes", 120);
+                                inv.used_seconds = io.optInt("used_seconds", 0);
+                                inv.is_connected = io.optInt("is_connected", 0);
+                                res.invoices.add(inv);
+                            }
                         }
                     }
 
@@ -134,22 +149,33 @@ public class ApiClient {
     }
 
     public static void sendCommand(String token, String action, String mac, int minutes, ApiCallback<String> callback) {
+        sendCommand(token, action, mac, minutes, 0, 0, callback);
+    }
+
+    public static void sendCommand(String token, String action, String mac, int minutes, int downRate, int upRate, ApiCallback<String> callback) {
         try {
+            boolean isLocal = baseUrl.contains("192.168.") || baseUrl.contains(".local");
+            String targetUrl = isLocal ? (baseUrl + "/cgi-bin/hotspot-api") : (baseUrl + "/api/admin/command");
+
             JSONObject body = new JSONObject();
             body.put("action", action);
-            body.put("mac", mac != null ? mac : "");
+            body.put("mac", mac != null ? mac.trim() : "");
             body.put("minutes", minutes);
+            body.put("download_rate", downRate);
+            body.put("upload_rate", upRate);
 
-            Request request = new Request.Builder()
-                    .url(baseUrl + "/api/admin/command")
-                    .header("Authorization", "Bearer " + token)
-                    .post(RequestBody.create(body.toString(), JSON))
-                    .build();
+            Request.Builder reqBuilder = new Request.Builder()
+                    .url(targetUrl)
+                    .post(RequestBody.create(body.toString(), JSON));
 
-            client.newCall(request).enqueue(new Callback() {
+            if (!isLocal && token != null && !token.isEmpty()) {
+                reqBuilder.header("Authorization", "Bearer " + token);
+            }
+
+            client.newCall(reqBuilder.build()).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    mainHandler.post(() -> callback.onError("কমান্ড পাঠানো ব্যর্থ"));
+                    mainHandler.post(() -> callback.onError("কমান্ড পাঠানো ব্যর্থ: " + e.getMessage()));
                 }
 
                 @Override
@@ -158,10 +184,10 @@ public class ApiClient {
                         String bodyStr = response.body().string();
                         JSONObject res = new JSONObject(bodyStr);
                         if (res.optBoolean("success", false)) {
-                            String msg = res.optString("message", "কমান্ড সফলভাবে পাঠানো হয়েছে");
+                            String msg = res.optString("message", "কমান্ড সফলভাবে কার্যকর হয়েছে");
                             mainHandler.post(() -> callback.onSuccess(msg));
                         } else {
-                            String err = res.optString("error", "ব্যর্থ হয়েছে");
+                            String err = res.optString("error", res.optString("message", "ব্যর্থ হয়েছে"));
                             mainHandler.post(() -> callback.onError(err));
                         }
                     } catch (Exception e) {

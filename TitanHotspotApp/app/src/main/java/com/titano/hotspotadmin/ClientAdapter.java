@@ -47,7 +47,7 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder
 
         boolean isAuth = "authenticated".equalsIgnoreCase(item.state);
         if (isAuth) {
-            h.tvStatusBadge.setText("🟢 অনুমোদিত (Online)");
+            h.tvStatusBadge.setText("🟢 অনুমোদিত • " + item.getSpeedFormatted());
             h.tvStatusBadge.setTextColor(0xFF10B981);
             h.tvStatusBadge.setBackgroundColor(0xFF163A29);
         } else {
