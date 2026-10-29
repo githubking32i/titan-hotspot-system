@@ -14,40 +14,86 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     ACTION=""
     MAC=""
     MINUTES=""
+    DOWN_RATE=""
+    UP_RATE=""
+    CUSTOM=""
     if command -v jsonfilter >/dev/null 2>&1; then
         ACTION=$(echo "$POST_DATA" | jsonfilter -e '@.action' 2>/dev/null)
         MAC=$(echo "$POST_DATA" | jsonfilter -e '@.mac' 2>/dev/null)
         MINUTES=$(echo "$POST_DATA" | jsonfilter -e '@.minutes' 2>/dev/null)
+        DOWN_RATE=$(echo "$POST_DATA" | jsonfilter -e '@.download_rate' 2>/dev/null)
+        UP_RATE=$(echo "$POST_DATA" | jsonfilter -e '@.upload_rate' 2>/dev/null)
+        CUSTOM=$(echo "$POST_DATA" | jsonfilter -e '@.custom' 2>/dev/null)
     fi
 
+    # Helper defaults
+    [ -z "$MINUTES" ] && MINUTES=120
+    [ -z "$DOWN_RATE" ] && DOWN_RATE=0
+    [ -z "$UP_RATE" ] && UP_RATE=0
+    [ -z "$CUSTOM" ] && CUSTOM="AdminPanel"
+
     if [ "$ACTION" = "auth" ] && [ -n "$MAC" ]; then
-        [ -z "$MINUTES" ] && MINUTES=120
-        ndsctl auth "$MAC" "$MINUTES" >/dev/null 2>&1
-        echo "{\"success\":true,\"message\":\"MAC $MAC authorized for $MINUTES minutes\"}"
+        # If client is already authenticated, deauth first so ndsctl auth succeeds cleanly
+        ndsctl deauth "$MAC" >/dev/null 2>&1
+        sleep 0.3
+        ndsctl auth "$MAC" "$MINUTES" "$UP_RATE" "$DOWN_RATE" 0 0 "$CUSTOM" >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"MAC $MAC অনুমোদিত ($MINUTES মিনিট, Down: ${DOWN_RATE}k, Up: ${UP_RATE}k)\"}"
         exit 0
+
+    elif [ "$ACTION" = "set_bandwidth" ] && [ -n "$MAC" ]; then
+        # Preserve user's remaining time if possible
+        REMAINING=120
+        CLI_JSON=$(ndsctl json "$MAC" 2>/dev/null)
+        if [ -n "$CLI_JSON" ]; then
+            S_END=$(echo "$CLI_JSON" | jsonfilter -e '@.session_end' 2>/dev/null)
+            NOW=$(date +%s)
+            if [ -n "$S_END" ] && [ "$S_END" -gt "$NOW" ] 2>/dev/null; then
+                REMAINING=$(( (S_END - NOW) / 60 ))
+                [ "$REMAINING" -lt 5 ] && REMAINING=5
+            fi
+        fi
+        ndsctl deauth "$MAC" >/dev/null 2>&1
+        sleep 0.3
+        ndsctl auth "$MAC" "$REMAINING" "$UP_RATE" "$DOWN_RATE" 0 0 "RateLimit_${DOWN_RATE}k" >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"MAC $MAC এর স্পিড লিমিট সেট হয়েছে (Down: ${DOWN_RATE}kbps, Up: ${UP_RATE}kbps, মেয়াদ: ${REMAINING}মি)\"}"
+        exit 0
+
     elif [ "$ACTION" = "deauth" ] && [ -n "$MAC" ]; then
         ndsctl deauth "$MAC" >/dev/null 2>&1
-        echo "{\"success\":true,\"message\":\"MAC $MAC deauthenticated\"}"
+        echo "{\"success\":true,\"message\":\"MAC $MAC ডিসকানেক্ট / কিক করা হয়েছে\"}"
         exit 0
+
     elif [ "$ACTION" = "trust" ] && [ -n "$MAC" ]; then
         ndsctl trust "$MAC" >/dev/null 2>&1
-        echo "{\"success\":true,\"message\":\"MAC $MAC added to trusted list\"}"
+        echo "{\"success\":true,\"message\":\"MAC $MAC কে ট্রাস্টেড (VIP) করা হয়েছে\"}"
         exit 0
+
     elif [ "$ACTION" = "untrust" ] && [ -n "$MAC" ]; then
         ndsctl untrust "$MAC" >/dev/null 2>&1
-        echo "{\"success\":true,\"message\":\"MAC $MAC removed from trusted list\"}"
+        echo "{\"success\":true,\"message\":\"MAC $MAC কে ট্রাস্টেড তালিকা থেকে সরানো হয়েছে\"}"
         exit 0
+
+    elif [ "$ACTION" = "set_global_limits" ]; then
+        uci set opennds.@opennds[0].download_rate_limit_threshold="$DOWN_RATE"
+        uci set opennds.@opennds[0].upload_rate_limit_threshold="$UP_RATE"
+        uci commit opennds
+        /etc/init.d/opennds restart >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"গ্লোবাল স্পিড লিমিট সংরক্ষিত (Down: ${DOWN_RATE}kbps, Up: ${UP_RATE}kbps)\"}"
+        exit 0
+
     elif [ "$ACTION" = "restart_daemon" ]; then
         /etc/init.d/titan-hotspot restart >/dev/null 2>&1
-        echo "{\"success\":true,\"message\":\"Hotspot daemon restarted\"}"
+        echo "{\"success\":true,\"message\":\"হটস্পট ডেমন সফলভাবে রিস্টার্ট হয়েছে\"}"
         exit 0
+
     elif [ "$ACTION" = "restart_nds" ]; then
         /etc/init.d/opennds restart >/dev/null 2>&1
-        echo "{\"success\":true,\"message\":\"OpenNDS restarted\"}"
+        echo "{\"success\":true,\"message\":\"OpenNDS সফলভাবে রিস্টার্ট হয়েছে\"}"
         exit 0
     fi
 fi
 
+# System Metrics
 UPTIME=$(uptime | awk -F',  ' '{print $1}' | awk '{print $3,$4}')
 LOAD=$(uptime | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//')
 DAEMON_RUNNING=false
@@ -55,12 +101,36 @@ if /etc/init.d/titan-hotspot status 2>/dev/null | grep -q "running"; then
     DAEMON_RUNNING=true
 fi
 
-NDS_JSON=$(ndsctl json 2>/dev/null)
-[ -z "$NDS_JSON" ] && NDS_JSON="{}"
+GLOBAL_DOWN=$(uci -q get opennds.@opennds[0].download_rate_limit_threshold || echo "0")
+[ -z "$GLOBAL_DOWN" ] && GLOBAL_DOWN="0"
+GLOBAL_UP=$(uci -q get opennds.@opennds[0].upload_rate_limit_threshold || echo "0")
+[ -z "$GLOBAL_UP" ] && GLOBAL_UP="0"
 
+NDS_JSON="{}"
+for i in 1 2 3; do
+    TRY_JSON=$(ndsctl json 2>/dev/null)
+    case "$TRY_JSON" in
+        "{"*)
+            NDS_JSON="$TRY_JSON"
+            break
+            ;;
+        *)
+            sleep 0.2
+            ;;
+    esac
+done
+
+# DHCP Hostnames map
+DHCP_MAP="{}"
+if [ -f /tmp/dhcp.leases ]; then
+    DHCP_MAP=$(awk 'BEGIN{printf "{"} {if (n++) printf ","; n_clean=($4=="*"?"":$4); printf "\"%s\":{\"ip\":\"%s\",\"hostname\":\"%s\"}", $2, $3, n_clean} END{printf "}"}' /tmp/dhcp.leases 2>/dev/null)
+    [ -z "$DHCP_MAP" ] && DHCP_MAP="{}"
+fi
+
+# Cloudflare Invoices
 WORKER_URL="${HOTSPOT_WORKER_URL:-https://YOUR_SUBDOMAIN.workers.dev}"
 ADMIN_TOKEN="${HOTSPOT_ADMIN_TOKEN:-YOUR_ADMIN_SECRET_TOKEN}"
-INVOICES_JSON=$(curl -s -m 4 -H "Authorization: Bearer $ADMIN_TOKEN" "$WORKER_URL/admin/invoices" 2>/dev/null)
+INVOICES_JSON=$(curl -s -m 3 -H "Authorization: Bearer $ADMIN_TOKEN" "$WORKER_URL/admin/invoices" 2>/dev/null)
 [ -z "$INVOICES_JSON" ] && INVOICES_JSON="[]"
 
 cat << EOF
@@ -68,6 +138,9 @@ cat << EOF
   "uptime": "$UPTIME",
   "load": "$LOAD",
   "daemon_running": $DAEMON_RUNNING,
+  "global_down_limit": "$GLOBAL_DOWN",
+  "global_up_limit": "$GLOBAL_UP",
+  "dhcp_map": $DHCP_MAP,
   "nds_clients": $NDS_JSON,
   "invoices": $INVOICES_JSON
 }

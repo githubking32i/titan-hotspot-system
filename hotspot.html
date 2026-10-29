@@ -3,20 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TITAN Hotspot — Admin Control Panel</title>
+  <title>TITAN Hotspot — Bandwidth & User Control Center</title>
   <style>
     :root {
-      --bg: #0b0f19;
-      --card-bg: rgba(26, 34, 52, 0.7);
+      --bg: #090d16;
+      --card-bg: rgba(18, 24, 38, 0.75);
       --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(25, 33, 52, 0.85);
       --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.35);
       --accent-hover: #2563eb;
+      --cyan: #06b6d4;
+      --purple: #8b5cf6;
       --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.3);
       --warning: #f59e0b;
       --danger: #ef4444;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --danger-glow: rgba(239, 68, 68, 0.3);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", Helvetica, Arial, sans-serif;
     }
 
     * {
@@ -27,17 +33,19 @@
 
     body {
       background: var(--bg);
-      background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-                        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.12) 0px, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0px, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0px, transparent 60%);
       color: var(--text);
       font-family: var(--font-family);
       min-height: 100vh;
-      padding: 24px 16px;
+      padding: 20px 16px 40px;
       line-height: 1.5;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
     }
 
@@ -48,68 +56,109 @@
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      margin-bottom: 28px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
     }
 
-    .logo-section {
+    .brand-section {
       display: flex;
       align-items: center;
       gap: 14px;
     }
 
-    .logo-badge {
-      width: 44px;
-      height: 44px;
+    .brand-logo {
+      width: 48px;
+      height: 48px;
       background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      border-radius: 12px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 24px;
       font-weight: bold;
       color: white;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 4px 20px var(--accent-glow);
     }
 
-    .logo-text h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
+    .brand-text h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
       letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .logo-text p {
-      font-size: 0.85rem;
+    .brand-text p {
+      font-size: 0.82rem;
       color: var(--text-muted);
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #6ee7b7;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .pulsing-dot {
+      width: 7px;
+      height: 7px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.15); }
+      100% { opacity: 0.4; transform: scale(0.9); }
     }
 
     .header-actions {
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
+    /* Buttons */
     .btn {
-      padding: 8px 16px;
-      border-radius: 8px;
+      padding: 8px 14px;
+      border-radius: 10px;
       border: 1px solid transparent;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       text-decoration: none;
+      font-family: inherit;
+      white-space: nowrap;
     }
 
     .btn-primary {
-      background: var(--accent);
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
       color: white;
+      box-shadow: 0 2px 10px var(--accent-glow);
     }
     .btn-primary:hover {
-      background: var(--accent-hover);
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      transform: translateY(-1px);
     }
 
     .btn-secondary {
@@ -119,72 +168,200 @@
     }
     .btn-secondary:hover {
       background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-success {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.35);
+      color: #6ee7b7;
+    }
+    .btn-success:hover {
+      background: rgba(16, 185, 129, 0.25);
     }
 
     .btn-danger {
       background: rgba(239, 68, 68, 0.15);
-      border-color: rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.35);
       color: #fca5a5;
     }
     .btn-danger:hover {
       background: rgba(239, 68, 68, 0.25);
     }
 
-    .btn-sm {
-      padding: 4px 10px;
-      font-size: 0.75rem;
+    .btn-warning {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: #fcd34d;
+    }
+    .btn-warning:hover {
+      background: rgba(245, 158, 11, 0.25);
     }
 
-    /* Stats Grid */
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 0.74rem;
+      border-radius: 6px;
+    }
+
+    .speed-btn {
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      border-radius: 6px;
+      font-weight: 700;
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: #67e8f9;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .speed-btn:hover {
+      background: rgba(6, 182, 212, 0.25);
+      transform: scale(1.04);
+    }
+    .speed-btn.active {
+      background: #06b6d4;
+      color: #0b1120;
+      border-color: #06b6d4;
+    }
+
+    /* KPI Stats Grid */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 16px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
 
     .stat-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      backdrop-filter: blur(12px);
-      border-radius: 14px;
+      backdrop-filter: blur(14px);
+      border-radius: 16px;
       padding: 18px 20px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      gap: 6px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .stat-card:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+      transform: translateY(-2px);
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+      opacity: 0.7;
+    }
+    .stat-card.card-purple::after { background: linear-gradient(90deg, #8b5cf6, #ec4899); }
+    .stat-card.card-green::after { background: linear-gradient(90deg, #10b981, #06b6d4); }
+    .stat-card.card-orange::after { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+
+    .stat-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .stat-label {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      font-weight: 600;
+      font-weight: 700;
+    }
+
+    .stat-icon {
+      font-size: 1.3rem;
     }
 
     .stat-val {
-      font-size: 1.8rem;
+      font-size: 1.75rem;
       font-weight: 800;
       color: #fff;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .stat-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
     }
 
     .stat-desc {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
+    /* Tabs Bar */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 10px;
+      overflow-x: auto;
+    }
+
+    .tab-item {
+      padding: 9px 18px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-item:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .tab-item.active {
+      color: #fff;
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+
+    .tab-badge {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 7px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .tab-item.active .tab-badge {
+      background: var(--accent);
+      color: white;
+    }
+
     /* Section Cards */
     .section-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
       border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 28px;
+      padding: 22px;
+      margin-bottom: 24px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
     }
 
@@ -205,16 +382,56 @@
       gap: 8px;
     }
 
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 12px 8px 34px;
+      color: white;
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
     /* Tables */
     .table-container {
       overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
     }
 
     th {
@@ -229,7 +446,7 @@
     }
 
     td {
-      padding: 14px;
+      padding: 13px 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       vertical-align: middle;
     }
@@ -245,70 +462,165 @@
       gap: 4px;
       padding: 3px 8px;
       border-radius: 6px;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       font-weight: 600;
     }
 
     .badge-success {
       background: rgba(16, 185, 129, 0.15);
       color: #6ee7b7;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.35);
     }
 
     .badge-warning {
       background: rgba(245, 158, 11, 0.15);
       color: #fcd34d;
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      border: 1px solid rgba(245, 158, 11, 0.35);
     }
 
     .badge-danger {
       background: rgba(239, 68, 68, 0.15);
       color: #fca5a5;
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      border: 1px solid rgba(239, 68, 68, 0.35);
     }
 
     .badge-info {
       background: rgba(59, 130, 246, 0.15);
       color: #93c5fd;
-      border: 1px solid rgba(59, 130, 246, 0.3);
+      border: 1px solid rgba(59, 130, 246, 0.35);
     }
 
-    /* Action bar */
-    .quick-grant {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto;
-      gap: 12px;
-      align-items: end;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--card-border);
-      padding: 16px;
-      border-radius: 12px;
-      margin-top: 14px;
+    .badge-cyan {
+      background: rgba(6, 182, 212, 0.15);
+      color: #67e8f9;
+      border: 1px solid rgba(6, 182, 212, 0.35);
     }
 
-    .input-group {
+    .badge-purple {
+      background: rgba(139, 92, 246, 0.15);
+      color: #c4b5fd;
+      border: 1px solid rgba(139, 92, 246, 0.35);
+    }
+
+    .code-pill {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #93c5fd;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+    }
+    .code-pill:hover {
+      border-color: var(--accent);
+    }
+
+    .device-title {
+      font-weight: 700;
+      color: #fff;
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 6px;
     }
 
-    .input-group label {
-      font-size: 0.75rem;
+    .device-sub {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    /* Speed presets row */
+    .speed-presets-row {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 26px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .modal-close:hover { color: #fff; }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.78rem;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
+      margin-bottom: 6px;
     }
 
-    .input-control {
+    .form-control {
+      width: 100%;
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--card-border);
       border-radius: 8px;
-      padding: 8px 12px;
+      padding: 9px 12px;
       color: white;
       font-size: 0.88rem;
       font-family: inherit;
     }
-    .input-control:focus {
+    .form-control:focus {
       outline: none;
       border-color: var(--accent);
     }
@@ -321,9 +633,9 @@
       background: #1e293b;
       border: 1px solid var(--card-border);
       padding: 12px 20px;
-      border-radius: 10px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      font-size: 0.9rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      font-size: 0.88rem;
       color: white;
       display: none;
       z-index: 9999;
@@ -334,141 +646,330 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    .code-pill {
-      font-family: monospace;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.82rem;
-      color: #93c5fd;
-    }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- Header -->
+    <!-- Top Header -->
     <header>
-      <div class="logo-section">
-        <div class="logo-badge">⚡</div>
-        <div class="logo-text">
-          <h1>TITAN HOTSPOT — Admin Control</h1>
-          <p>IMOU HX21 ImmortalWrt & Cloudflare Worker Integration</p>
+      <div class="brand-section">
+        <div class="brand-logo">⚡</div>
+        <div class="brand-text">
+          <h1>
+            TITAN HOTSPOT 
+            <span class="live-badge"><span class="pulsing-dot"></span> লাইভ সচল</span>
+          </h1>
+          <p>IMOU HX21 Wi-Fi 6 Router — Bandwidth & User Control Center</p>
         </div>
       </div>
       <div class="header-actions">
-        <span id="refreshTimer" style="font-size: 0.8rem; color: var(--text-muted);">Auto-refreshing in 5s</span>
-        <button class="btn btn-secondary" onclick="fetchData()">🔄 রিলোড (Refresh)</button>
+        <span id="refreshStatus" style="font-size: 0.8rem; color: var(--text-muted);">Auto-refreshing in 5s</span>
+        <button class="btn btn-secondary" onclick="fetchData()">🔄 রিলোড</button>
+        <button class="btn btn-primary" onclick="openGlobalModal()">⚡ গ্লোবাল স্পিড পলিসি</button>
         <button class="btn btn-secondary" onclick="restartDaemon()">⚙️ ডেমন রিস্টার্ট</button>
       </div>
     </header>
 
-    <!-- Key Stats -->
+    <!-- KPI Metric Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <span class="stat-label">🟢 একটিভ গ্রাহক (Active Online)</span>
-        <span class="stat-val" id="statActiveUsers">0</span>
-        <span class="stat-desc">বর্তমানে ওয়াইফাই ব্যবহার করছেন</span>
+        <div class="stat-top">
+          <span class="stat-label">👥 অনলাইন ক্লায়েন্ট</span>
+          <span class="stat-icon">📡</span>
+        </div>
+        <div class="stat-val">
+          <span id="statActiveCount">0</span>
+          <span class="stat-sub">/ <span id="statTotalClients">0</span> মোট</span>
+        </div>
+        <div class="stat-desc" id="statClientDetails">অনুমোদিত: 0 | লগইন পেজে: 0</div>
       </div>
-      <div class="stat-card">
-        <span class="stat-label">📋 মোট সাবস্ক্রিপশন (Total Paid)</span>
-        <span class="stat-val" id="statTotalVouchers">0</span>
-        <span class="stat-desc">সফলভাবে ভেরিফাইড ভাউচার</span>
+
+      <div class="stat-card card-purple">
+        <div class="stat-top">
+          <span class="stat-label">⚡ সেশন ট্রাফিক ব্যবহার</span>
+          <span class="stat-icon">🚀</span>
+        </div>
+        <div class="stat-val" id="statTotalTraffic">0 MB</div>
+        <div class="stat-desc" id="statTrafficRates">⬇️ 0 kB/s &nbsp; ⬆️ 0 kB/s</div>
       </div>
-      <div class="stat-card">
-        <span class="stat-label">💰 মোট আয় (Total Revenue)</span>
-        <span class="stat-val" id="statRevenue">৳0</span>
-        <span class="stat-desc">bKash / Nagad অটো পেমেন্ট</span>
+
+      <div class="stat-card card-green">
+        <div class="stat-top">
+          <span class="stat-label">💰 মোট আয় ও ভাউচার</span>
+          <span class="stat-icon">💳</span>
+        </div>
+        <div class="stat-val" id="statRevenue">৳0</div>
+        <div class="stat-desc" id="statVoucherCount">0 টি সফল ভাউচার পেমেন্ট</div>
       </div>
-      <div class="stat-card">
-        <span class="stat-label">⚡ রাউটার ডেমন (Status)</span>
-        <span class="stat-val" id="statDaemon" style="font-size: 1.3rem; margin-top: 6px;">পরীক্ষা হচ্ছে...</span>
-        <span class="stat-desc" id="statUptime">Uptime: --</span>
+
+      <div class="stat-card card-orange">
+        <div class="stat-top">
+          <span class="stat-label">🛡️ রাউটার হেলথ ও সিপিইউ</span>
+          <span class="stat-icon">⚙️</span>
+        </div>
+        <div class="stat-val" style="font-size: 1.25rem; margin-top: 4px;" id="statDaemonBadge">🟢 ডেমন সচল</div>
+        <div class="stat-desc" id="statRouterLoad">Uptime: -- | Load: --</div>
       </div>
     </div>
 
-    <!-- Active Connected WiFi Devices -->
-    <div class="section-card">
-      <div class="section-header">
-        <div class="section-title">
-          <span>📡</span> লাইভ কানেক্টেড ওয়াইফাই ডিভাইস (Live WiFi Clients)
-        </div>
-        <span class="badge badge-info" id="clientCountBadge">0 Clients</span>
-      </div>
+    <!-- Navigation Tabs -->
+    <div class="tab-bar">
+      <button class="tab-item active" onclick="switchTab('clients', this)">
+        <span>📡</span> কানেক্টেড ডিভাইস ও স্পিড কন্ট্রোল
+        <span class="tab-badge" id="tabClientsBadge">0</span>
+      </button>
+      <button class="tab-item" onclick="switchTab('invoices', this)">
+        <span>🧾</span> সাবস্ক্রিপশন ও সময় হিসাব
+        <span class="tab-badge" id="tabInvoicesBadge">0</span>
+      </button>
+      <button class="tab-item" onclick="switchTab('global', this)">
+        <span>⚡</span> গ্লোবাল স্পিড পলিসি সেটিংস
+      </button>
+      <button class="tab-item" onclick="switchTab('manual', this)">
+        <span>➕</span> ম্যানুয়াল পাস দিন
+      </button>
+    </div>
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>MAC Address</th>
-              <th>IP Address</th>
-              <th>স্ট্যাটাস (OpenNDS)</th>
-              <th>ব্যবহার (Download/Upload)</th>
-              <th>অ্যাকশন (Actions)</th>
-            </tr>
-          </thead>
-          <tbody id="clientsTableBody">
-            <tr>
-              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">তথ্য লোড হচ্ছে...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- TAB 1: Connected Devices & Bandwidth Control -->
+    <div id="tab-clients" class="tab-content">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <span>🚀</span> লাইভ ওয়াইফাই ইউজার ও প্রতি ইউজারের ব্যান্ডউইথ কন্ট্রোল
+          </div>
+          <div class="badge badge-info" id="globalCapBadge">গ্লোবাল স্পিড: ফুল স্পিড</div>
+        </div>
 
-      <!-- Quick Grant Pass Box -->
-      <div class="quick-grant">
-        <div class="input-group">
-          <label>ডিভাইস MAC Address</label>
-          <input type="text" id="quickMac" class="input-control" placeholder="যেমন: 9a:d0:17:fe:94:e2">
+        <div class="filter-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="clientSearch" class="search-input" placeholder="নাম, MAC বা IP দিয়ে সার্চ করুন..." oninput="renderClients()">
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-secondary btn-sm" onclick="setFilter('all', this)">সকল</button>
+            <button class="btn btn-secondary btn-sm" onclick="setFilter('auth', this)">🟢 অনুমোদিত</button>
+            <button class="btn btn-secondary btn-sm" onclick="setFilter('preauth', this)">🟡 ক্যাপটিভ পেজ</button>
+          </div>
         </div>
-        <div class="input-group">
-          <label>মেয়াদ (মিনিট)</label>
-          <input type="number" id="quickMinutes" class="input-control" value="120" min="5" step="15">
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ডিভাইস ও আইডেন্টিটি</th>
+                <th>স্ট্যাটাস ও মেয়াদ</th>
+                <th>ব্যান্ডউইথ স্পিড ক্যাপ</th>
+                <th>লাইভ ডাটা ব্যবহার</th>
+                <th>১-ক্লিক স্পিড লিমিট</th>
+                <th>ইউজার অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="clientsTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">তথ্য লোড হচ্ছে...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <button class="btn btn-primary" onclick="quickGrantAuth()">⚡ ইন্টারনেট পারমিশন দিন</button>
       </div>
     </div>
 
-    <!-- Cloudflare Invoices & Customer Time Balance -->
-    <div class="section-card">
-      <div class="section-header">
-        <div class="section-title">
-          <span>🧾</span> গ্রাহকের সাবস্ক্রিপশন ও অবশিষ্ট সময় (Invoices & Balance)
+    <!-- TAB 2: Invoices & Time Balance -->
+    <div id="tab-invoices" class="tab-content" style="display: none;">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <span>🧾</span> গ্রাহকের সাবস্ক্রিপশন, পেমেন্ট ও অবশিষ্ট সময় হিসাব
+          </div>
+          <span class="badge badge-success" id="invoiceCountPill">0 Invoices</span>
         </div>
-        <span class="badge badge-success" id="invoiceCountBadge">0 Invoices</span>
-      </div>
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>ইনভয়েস / TrxID</th>
-              <th>গ্রাহকের ফোন ও MAC</th>
-              <th>প্যাকেজ ও টাকা</th>
-              <th>অবশিষ্ট সময় (Remaining)</th>
-              <th>কানেকশন অবস্থা</th>
-              <th>অ্যাকশন</th>
-            </tr>
-          </thead>
-          <tbody id="invoicesTableBody">
-            <tr>
-              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">তথ্য লোড হচ্ছে...</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ইনভয়েস / TrxID</th>
+                <th>গ্রাহকের ফোন ও MAC</th>
+                <th>প্যাকেজ ও টাকা</th>
+                <th>অবশিষ্ট মেয়াদ (Remaining)</th>
+                <th>সংযোগের অবস্থা</th>
+                <th>অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="invoicesTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">লোড হচ্ছে...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- Footer System Actions -->
+    <!-- TAB 3: Global Bandwidth Policy -->
+    <div id="tab-global" class="tab-content" style="display: none;">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <span>⚡</span> হটস্পটের জন্য গ্লোবাল ডিফল্ট স্পিড লিমিট কনফিগারেশন
+          </div>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
+          এখানে সেট করা ডাউনলোড ও আপলোড স্পিড রাউটারের ওপেন-এনডিএস (OpenNDS) এ সংরক্ষিত থাকবে। নতুন যেকোনো গ্রাহক ওয়াইফাইতে কানেক্ট হলে স্বয়ংক্রিয়ভাবে এই স্পিড ক্যাপ প্রযোজ্য হবে।
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div class="stat-card" style="cursor: pointer;" onclick="applyGlobalPreset(2048, 1024)">
+            <span class="stat-label">ইকোনমি প্যাকেজ</span>
+            <div style="font-size: 1.3rem; font-weight: 800; color: #67e8f9;">2 Mbps Down / 1 Mbps Up</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">বেসিক ব্রাউজিং ও মেসেজিংয়ের জন্য উপযুক্ত</div>
+            <button class="btn btn-secondary btn-sm" style="margin-top: 10px;">প্রয়োগ করুন</button>
+          </div>
+
+          <div class="stat-card" style="cursor: pointer; border-color: rgba(59, 130, 246, 0.4);" onclick="applyGlobalPreset(5120, 2048)">
+            <span class="stat-label" style="color: #93c5fd;">★ স্ট্যান্ডার্ড প্যাকেজ (প্রস্তাবিত)</span>
+            <div style="font-size: 1.3rem; font-weight: 800; color: #93c5fd;">5 Mbps Down / 2 Mbps Up</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">ইউটিউব 1080p এবং ফেসবুক ভিডিওর জন্য সেরা</div>
+            <button class="btn btn-primary btn-sm" style="margin-top: 10px;">প্রয়োগ করুন</button>
+          </div>
+
+          <div class="stat-card" style="cursor: pointer;" onclick="applyGlobalPreset(10240, 5120)">
+            <span class="stat-label">হাই স্পিড প্রিমিয়াম</span>
+            <div style="font-size: 1.3rem; font-weight: 800; color: #c4b5fd;">10 Mbps Down / 5 Mbps Up</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">গেমিং ও হাই স্পিড স্ট্রিমিং</div>
+            <button class="btn btn-secondary btn-sm" style="margin-top: 10px;">প্রয়োগ করুন</button>
+          </div>
+
+          <div class="stat-card" style="cursor: pointer;" onclick="applyGlobalPreset(0, 0)">
+            <span class="stat-label">আনলিমিটেড স্পিড</span>
+            <div style="font-size: 1.3rem; font-weight: 800; color: #6ee7b7;">🚀 কোনো লিমিট নেই</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">রাউটারের সর্বোচ্চ গতি উন্মুক্ত</div>
+            <button class="btn btn-secondary btn-sm" style="margin-top: 10px;">প্রয়োগ করুন</button>
+          </div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px;">
+          <h4 style="margin-bottom: 12px; font-size: 0.95rem;">কাস্টম গ্লোবাল স্পিড নির্ধারণ করুন</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto; gap: 14px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">ডাউনলোড লিমিট (Kbps - যেমন 5120 = 5M, 0 = নো লিমিট)</label>
+              <input type="number" id="customGlobalDown" class="form-control" value="0" min="0" step="512">
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">আপলোড লিমিট (Kbps - যেমন 2048 = 2M, 0 = নো লিমিট)</label>
+              <input type="number" id="customGlobalUp" class="form-control" value="0" min="0" step="512">
+            </div>
+            <button class="btn btn-primary" onclick="submitCustomGlobal()">💾 সেভ ও রাউটারে রিস্টার্ট</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Manual Grant -->
+    <div id="tab-manual" class="tab-content" style="display: none;">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <span>➕</span> গ্রাহককে ম্যানুয়ালি ইন্টারনেট পারমিশন ও স্পিড নির্ধারণ
+          </div>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
+          যেকোনো ডিভাইসকে সরাসরি কোনো পেমেন্ট ছাড়া এডমিন পারমিশন দিন এবং তার ডাউনলোড স্পিড ক্যাপ নির্ধারণ করে দিন।
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+          <div class="form-group">
+            <label class="form-label">ডিভাইস MAC Address</label>
+            <input type="text" id="manualMac" class="form-control" placeholder="যেমন: 46:b0:0a:89:0a:9a">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ইন্টারনেট সময়কাল (Duration)</label>
+            <select id="manualDuration" class="form-control">
+              <option value="60">১ ঘণ্টা</option>
+              <option value="120" selected>২ ঘণ্টা</option>
+              <option value="720">১২ ঘণ্টা</option>
+              <option value="1440">১ দিন (২৪ ঘণ্টা)</option>
+              <option value="10080">৭ দিন (১ সপ্তাহ)</option>
+              <option value="43200">৩০ দিন (১ মাস)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">স্পিড লিমিট ক্যাপ (Bandwidth)</label>
+            <select id="manualSpeed" class="form-control">
+              <option value="0:0">🚀 ফুল স্পিড (আনলিমিটেড)</option>
+              <option value="2048:1024">⚡ 2 Mbps Down / 1 Mbps Up</option>
+              <option value="5120:2048" selected>⚡ 5 Mbps Down / 2 Mbps Up</option>
+              <option value="10240:5120">⚡ 10 Mbps Down / 5 Mbps Up</option>
+              <option value="20480:10240">⚡ 20 Mbps Down / 10 Mbps Up</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitManualGrant()">⚡ ইন্টারনেট এক্সেস অনুমোদন দিন</button>
+      </div>
+    </div>
+
+    <!-- Quick Footer Actions -->
     <div class="section-card" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
       <div>
-        <div style="font-weight: 700; font-size: 0.95rem;">সিস্টেম সার্ভিস কন্ট্রোল (Quick Actions)</div>
-        <div style="font-size: 0.8rem; color: var(--text-muted);">ক্যাপটিভ পোর্টাল বা অটোমেশন স্ক্রিপ্ট সমস্যা করলে এখান থেকে রিস্টার্ট করুন</div>
+        <div style="font-weight: 700; font-size: 0.95rem;">সিস্টেম সার্ভিস রিস্টার্ট ও ম্যানেজমেন্ট</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">ক্যাপটিভ পোর্টাল বা স্পিড শেপিং রিফ্রেশ করতে রিস্টার্ট ব্যবহার করুন</div>
       </div>
-      <div style="display: flex; gap: 10px;">
-        <button class="btn btn-secondary" onclick="restartDaemon()">🔄 হটস্পট ডেমন রিস্টার্ট</button>
-        <button class="btn btn-secondary" onclick="restartNds()">🌐 OpenNDS রিস্টার্ট</button>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="restartDaemon()">🔄 হটস্পট ডেমন রিস্টার্ট</button>
+        <button class="btn btn-secondary btn-sm" onclick="restartNds()">🌐 OpenNDS সার্ভিস রিস্টার্ট</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Speed Control Modal -->
+  <div id="speedModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>⚡</span> ব্যান্ডউইথ ও স্পিড লিমিট নির্ধারণ
+        </div>
+        <button class="modal-close" onclick="closeSpeedModal()">✕</button>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <div style="font-weight: 600; color: #fff;" id="modalDeviceName">ডিভাইস</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);" id="modalDeviceMac">MAC: --</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">⬇️ ডাউনলোড স্পিড লিমিট (Mbps)</label>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input type="range" id="modalDownSlider" min="0" max="30" step="1" value="5" style="flex: 1;" oninput="syncSpeedSlider('down')">
+          <input type="number" id="modalDownNum" class="form-control" style="width: 80px;" min="0" max="100" value="5" oninput="syncSpeedNum('down')">
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Mbps</span>
+        </div>
+        <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">০ (0) দিলে কোনো লিমিট থাকবে না (ফুল স্পিড)</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">⬆️ আপলোড স্পিড লিমিট (Mbps)</label>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input type="range" id="modalUpSlider" min="0" max="20" step="1" value="2" style="flex: 1;" oninput="syncSpeedSlider('up')">
+          <input type="number" id="modalUpNum" class="form-control" style="width: 80px;" min="0" max="50" value="2" oninput="syncSpeedNum('up')">
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Mbps</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label class="form-label">কুইক প্রিসেট সিলেক্ট করুন:</label>
+        <div class="speed-presets-row">
+          <button class="speed-btn" onclick="setModalPresets(2, 1)">2M / 1M</button>
+          <button class="speed-btn" onclick="setModalPresets(5, 2)">5M / 2M</button>
+          <button class="speed-btn" onclick="setModalPresets(10, 5)">10M / 5M</button>
+          <button class="speed-btn" onclick="setModalPresets(20, 10)">20M / 10M</button>
+          <button class="speed-btn" onclick="setModalPresets(0, 0)">🚀 আনলিমিটেড</button>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-secondary" onclick="closeSpeedModal()">বাতিল</button>
+        <button class="btn btn-primary" onclick="submitModalSpeed()">⚡ স্পিড প্রয়োগ করুন</button>
       </div>
     </div>
   </div>
@@ -476,8 +977,10 @@
   <div id="toast">মেসেজ</div>
 
   <script>
+    let globalData = null;
     let refreshSec = 5;
-    let refreshInterval = null;
+    let activeFilter = 'all';
+    let currentModalMac = '';
 
     function showToast(msg, isError = false) {
       const toast = document.getElementById('toast');
@@ -497,6 +1000,15 @@
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + (sizes[i] || 'KB');
     }
 
+    function formatSpeedCap(downKbps, upKbps) {
+      if (!downKbps || downKbps == 0 || downKbps == 'null') {
+        return '<span class="badge badge-success">🚀 ফুল স্পিড</span>';
+      }
+      const downMbps = (downKbps / 1024).toFixed(downKbps % 1024 === 0 ? 0 : 1);
+      const upMbps = upKbps && upKbps != 'null' ? (upKbps / 1024).toFixed(upKbps % 1024 === 0 ? 0 : 1) : null;
+      return `<span class="badge badge-cyan">⚡ ⬇️${downMbps}M ${upMbps ? `⬆️${upMbps}M` : ''}</span>`;
+    }
+
     function formatRemaining(totalMins, usedSecs) {
       const totalSecs = (totalMins || 0) * 60;
       const remSecs = Math.max(0, totalSecs - (usedSecs || 0));
@@ -513,6 +1025,37 @@
       return parts.join(' ');
     }
 
+    function formatSessionLeft(sessionEnd) {
+      if (!sessionEnd || sessionEnd === 'null' || sessionEnd == 0) return '--';
+      const now = Math.floor(Date.now() / 1000);
+      const diff = sessionEnd - now;
+      if (diff <= 0) return '⌛ মেয়াদ শেষ';
+      const hrs = Math.floor(diff / 3600);
+      const mins = Math.floor((diff % 3600) / 60);
+      if (hrs > 0) return `${hrs}ঘণ্টা ${mins}মি বাকি`;
+      return `${mins} মিনিট বাকি`;
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      showToast(`কপি করা হয়েছে: ${text}`);
+    }
+
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+      document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.style.display = 'block';
+      if (el) el.classList.add('active');
+    }
+
+    function setFilter(filter, el) {
+      activeFilter = filter;
+      el.parentElement.querySelectorAll('.btn').forEach(b => b.classList.replace('btn-primary', 'btn-secondary'));
+      el.classList.replace('btn-secondary', 'btn-primary');
+      renderClients();
+    }
+
     async function sendApi(action, payload = {}) {
       try {
         const res = await fetch('/cgi-bin/hotspot-api', {
@@ -520,27 +1063,51 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action, ...payload })
         });
-        const data = await res.json();
-        return data;
+        return await res.json();
       } catch (e) {
         console.error(e);
-        return { success: false, message: 'নেটওয়ার্ক ত্রুটি' };
+        return { success: false, message: 'নেটওয়ার্ক সংযোগ ত্রুটি' };
       }
     }
 
-    async function authMac(mac, minutes) {
-      showToast(`MAC ${mac} অনুমোদিত করা হচ্ছে...`);
-      const res = await sendApi('auth', { mac, minutes });
-      showToast(res.message || 'সম্পন্ন হয়েছে');
-      fetchData();
+    async function setClientBandwidth(mac, downMbps, upMbps) {
+      const downKbps = Math.round(downMbps * 1024);
+      const upKbps = Math.round(upMbps * 1024);
+      showToast(`MAC ${mac} এর স্পিড সেট হচ্ছে...`);
+      const res = await sendApi('set_bandwidth', {
+        mac: mac,
+        download_rate: downKbps,
+        upload_rate: upKbps
+      });
+      showToast(res.message || 'স্পিড পরিবর্তন সম্পন্ন');
+      setTimeout(fetchData, 800);
+    }
+
+    async function authMac(mac, minutes, downKbps = 0, upKbps = 0) {
+      showToast(`MAC ${mac} অনুমোদন করা হচ্ছে...`);
+      const res = await sendApi('auth', {
+        mac: mac,
+        minutes: minutes,
+        download_rate: downKbps,
+        upload_rate: upKbps
+      });
+      showToast(res.message || 'অনুমোদন সফল');
+      setTimeout(fetchData, 800);
     }
 
     async function deauthMac(mac) {
-      if (!confirm(`আপনি কি নিশ্চিতভাবে ${mac} ডিভাইসটিকে ডিসকানেক্ট করতে চান?`)) return;
+      if (!confirm(`আপনি কি নিশ্চিতভাবে ${mac} ডিভাইসটিকে ডিসকানেক্ট বা কিক করতে চান?`)) return;
       showToast(`MAC ${mac} ডিসকানেক্ট করা হচ্ছে...`);
       const res = await sendApi('deauth', { mac });
       showToast(res.message || 'ডিসকানেক্ট করা হয়েছে');
-      fetchData();
+      setTimeout(fetchData, 800);
+    }
+
+    async function trustMac(mac) {
+      if (!confirm(`${mac} ডিভাইসকে কি ভিআইপি/বাইপাস করতে চান? এটি কখনোই ক্যাপটিভ পোর্টাল দেখতে পাবে না।`)) return;
+      const res = await sendApi('trust', { mac });
+      showToast(res.message || 'VIP তালিকায় যুক্ত করা হয়েছে');
+      setTimeout(fetchData, 800);
     }
 
     async function restartDaemon() {
@@ -557,153 +1124,329 @@
       setTimeout(fetchData, 2000);
     }
 
-    async function quickGrantAuth() {
-      const mac = document.getElementById('quickMac').value.trim();
-      const mins = parseInt(document.getElementById('quickMinutes').value) || 120;
+    /* Modal functions */
+    function openSpeedModal(mac, name, currentDownKbps, currentUpKbps) {
+      currentModalMac = mac;
+      document.getElementById('modalDeviceName').innerText = name || 'ওয়াইফাই ডিভাইস';
+      document.getElementById('modalDeviceMac').innerText = `MAC: ${mac}`;
+
+      const downM = currentDownKbps && currentDownKbps != 'null' ? Math.round(currentDownKbps / 1024) : 0;
+      const upM = currentUpKbps && currentUpKbps != 'null' ? Math.round(currentUpKbps / 1024) : 0;
+
+      document.getElementById('modalDownSlider').value = downM;
+      document.getElementById('modalDownNum').value = downM;
+      document.getElementById('modalUpSlider').value = upM;
+      document.getElementById('modalUpNum').value = upM;
+
+      document.getElementById('speedModal').classList.add('show');
+    }
+
+    function closeSpeedModal() {
+      document.getElementById('speedModal').classList.remove('show');
+    }
+
+    function syncSpeedSlider(type) {
+      const slider = document.getElementById(type === 'down' ? 'modalDownSlider' : 'modalUpSlider');
+      const num = document.getElementById(type === 'down' ? 'modalDownNum' : 'modalUpNum');
+      num.value = slider.value;
+    }
+
+    function syncSpeedNum(type) {
+      const slider = document.getElementById(type === 'down' ? 'modalDownSlider' : 'modalUpSlider');
+      const num = document.getElementById(type === 'down' ? 'modalDownNum' : 'modalUpNum');
+      slider.value = num.value;
+    }
+
+    function setModalPresets(down, up) {
+      document.getElementById('modalDownSlider').value = down;
+      document.getElementById('modalDownNum').value = down;
+      document.getElementById('modalUpSlider').value = up;
+      document.getElementById('modalUpNum').value = up;
+    }
+
+    async function submitModalSpeed() {
+      const downM = parseFloat(document.getElementById('modalDownNum').value) || 0;
+      const upM = parseFloat(document.getElementById('modalUpNum').value) || 0;
+      closeSpeedModal();
+      await setClientBandwidth(currentModalMac, downM, upM);
+    }
+
+    /* Global Bandwidth */
+    function openGlobalModal() {
+      switchTab('global');
+      window.scrollTo({ top: document.getElementById('tab-global').offsetTop - 80, behavior: 'smooth' });
+    }
+
+    async function applyGlobalPreset(downKbps, upKbps) {
+      if (!confirm(`আপনি কি গ্লোবাল স্পিড পলিসি Down: ${downKbps}kbps, Up: ${upKbps}kbps সেট করতে চান?`)) return;
+      showToast('গ্লোবাল স্পিড পলিসি প্রয়োগ হচ্ছে...');
+      const res = await sendApi('set_global_limits', {
+        download_rate: downKbps,
+        upload_rate: upKbps
+      });
+      showToast(res.message || 'গ্লোবাল স্পিড পলিসি সফলভাবে সেভ হয়েছে');
+      setTimeout(fetchData, 2000);
+    }
+
+    async function submitCustomGlobal() {
+      const down = parseInt(document.getElementById('customGlobalDown').value) || 0;
+      const up = parseInt(document.getElementById('customGlobalUp').value) || 0;
+      await applyGlobalPreset(down, up);
+    }
+
+    /* Manual Grant */
+    async function submitManualGrant() {
+      const mac = document.getElementById('manualMac').value.trim();
+      const mins = parseInt(document.getElementById('manualDuration').value) || 120;
+      const speedVal = document.getElementById('manualSpeed').value.split(':');
+      const downKbps = parseInt(speedVal[0]) || 0;
+      const upKbps = parseInt(speedVal[1]) || 0;
+
       if (!mac) {
         showToast('অনুগ্রহ করে সঠিক MAC Address দিন', true);
         return;
       }
-      await authMac(mac, mins);
-      document.getElementById('quickMac').value = '';
+
+      await authMac(mac, mins, downKbps, upKbps);
+      document.getElementById('manualMac').value = '';
+      switchTab('clients');
     }
 
-    function fillQuickMac(mac) {
-      document.getElementById('quickMac').value = mac;
-      window.scrollTo({ top: document.querySelector('.quick-grant').offsetTop - 100, behavior: 'smooth' });
+    function fillManualMac(mac) {
+      document.getElementById('manualMac').value = mac;
+      switchTab('manual');
     }
 
+    /* Render Clients Table */
+    function renderClients() {
+      if (!globalData) return;
+      const ndsClients = globalData.nds_clients && globalData.nds_clients.clients ? globalData.nds_clients.clients : {};
+      const dhcpMap = globalData.dhcp_map || {};
+      const query = (document.getElementById('clientSearch').value || '').toLowerCase().trim();
+
+      let clientMacs = Object.keys(ndsClients);
+      let activeCount = 0;
+      let totalClients = clientMacs.length;
+      let rowsHtml = '';
+
+      let filteredMacs = clientMacs.filter(mac => {
+        const c = ndsClients[mac];
+        const isAuth = (c.state || '').toLowerCase() === 'authenticated';
+        if (activeFilter === 'auth' && !isAuth) return false;
+        if (activeFilter === 'preauth' && isAuth) return false;
+
+        const hostInfo = dhcpMap[mac] || {};
+        const hostname = (hostInfo.hostname || '').toLowerCase();
+        const ip = (c.ip || '').toLowerCase();
+
+        if (query) {
+          return mac.toLowerCase().includes(query) || ip.includes(query) || hostname.includes(query);
+        }
+        return true;
+      });
+
+      clientMacs.forEach(mac => {
+        if ((ndsClients[mac].state || '').toLowerCase() === 'authenticated') activeCount++;
+      });
+
+      document.getElementById('statActiveCount').innerText = activeCount;
+      document.getElementById('statTotalClients').innerText = totalClients;
+      document.getElementById('tabClientsBadge').innerText = totalClients;
+      document.getElementById('statClientDetails').innerText = `অনুমোদিত: ${activeCount} | ক্যাপটিভ পেজে: ${totalClients - activeCount}`;
+
+      if (filteredMacs.length === 0) {
+        rowsHtml = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">কোনো ওয়াইফাই ডিভাইস পাওয়া যায়নি</td></tr>`;
+      } else {
+        filteredMacs.forEach(mac => {
+          const c = ndsClients[mac];
+          const isAuth = (c.state || '').toLowerCase() === 'authenticated';
+          const hostInfo = dhcpMap[mac] || {};
+          const deviceName = hostInfo.hostname || (isAuth ? 'স্মার্টফোন / ডিভাইস' : 'নতুন সংযোগ');
+          const is5G = (c.clientif || '').includes('phy1');
+
+          const bandBadge = is5G 
+            ? '<span class="badge badge-purple" style="font-size: 0.68rem;">5GHz Wi-Fi 6</span>'
+            : '<span class="badge badge-info" style="font-size: 0.68rem;">2.4GHz</span>';
+
+          const statusBadge = isAuth 
+            ? `<span class="badge badge-success">🟢 অনলাইন (${formatSessionLeft(c.session_end)})</span>`
+            : '<span class="badge badge-warning">🟡 ক্যাপটিভ লগইন পেজে</span>';
+
+          const speedBadge = formatSpeedCap(c.download_rate_limit_threshold, c.upload_rate_limit_threshold);
+
+          const dl = formatBytes(parseInt(c.download_this_session) || 0);
+          const ul = formatBytes(parseInt(c.upload_this_session) || 0);
+          const dlRate = (parseFloat(c.download_session_avg) || 0).toFixed(1);
+          const ulRate = (parseFloat(c.upload_session_avg) || 0).toFixed(1);
+
+          rowsHtml += `
+            <tr>
+              <td>
+                <div class="device-title">
+                  <span>${deviceName.includes('Laptop') ? '💻' : '📱'}</span>
+                  <span>${deviceName}</span>
+                  ${bandBadge}
+                </div>
+                <div class="device-sub">
+                  <span class="code-pill" title="ক্লিক করে কপি করুন" onclick="copyToClipboard('${c.mac}')">${c.mac}</span>
+                  <span>•</span>
+                  <span>${c.ip || '--'}</span>
+                </div>
+              </td>
+              <td>${statusBadge}</td>
+              <td>${speedBadge}</td>
+              <td>
+                <div style="font-size: 0.8rem; font-weight: 600;">⬇️ ${dl} &nbsp; ⬆️ ${ul}</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">গতি: ${dlRate} kbps dl / ${ulRate} kbps ul</div>
+              </td>
+              <td>
+                <div class="speed-presets-row">
+                  <button class="speed-btn" onclick="setClientBandwidth('${c.mac}', 2, 1)">2M</button>
+                  <button class="speed-btn" onclick="setClientBandwidth('${c.mac}', 5, 2)">5M</button>
+                  <button class="speed-btn" onclick="setClientBandwidth('${c.mac}', 10, 5)">10M</button>
+                  <button class="speed-btn" onclick="setClientBandwidth('${c.mac}', 0, 0)">🚀 ফুল</button>
+                  <button class="speed-btn" onclick="openSpeedModal('${c.mac}', '${deviceName}', '${c.download_rate_limit_threshold}', '${c.upload_rate_limit_threshold}')">⚙️</button>
+                </div>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  ${!isAuth ? `<button class="btn btn-success btn-sm" onclick="authMac('${c.mac}', 120, 5120, 2048)">+২ ঘণ্টা পাস</button>` : ''}
+                  <button class="btn btn-secondary btn-sm" onclick="authMac('${c.mac}', 1440, 5120, 2048)">+১ দিন</button>
+                  <button class="btn btn-danger btn-sm" onclick="deauthMac('${c.mac}')">কিক</button>
+                  <button class="btn btn-secondary btn-sm" title="VIP তালিকাভুক্ত করুন" onclick="trustMac('${c.mac}')">🛡️</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      document.getElementById('clientsTableBody').innerHTML = rowsHtml;
+    }
+
+    /* Render Invoices Table */
+    function renderInvoices() {
+      if (!globalData) return;
+      const invoices = Array.isArray(globalData.invoices) ? globalData.invoices : [];
+      document.getElementById('tabInvoicesBadge').innerText = invoices.length;
+      document.getElementById('invoiceCountPill').innerText = `${invoices.length} টি রেকর্ড`;
+
+      let completedCount = 0;
+      let totalRev = 0;
+      let rowsHtml = '';
+
+      if (invoices.length === 0) {
+        rowsHtml = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">কোনো ইনভয়েস পাওয়া যায়নি</td></tr>`;
+      } else {
+        invoices.forEach(inv => {
+          if (inv.status === 'completed') {
+            completedCount++;
+            totalRev += (inv.amount || 0);
+          }
+
+          let connBadge = '';
+          if (inv.is_connected == 1) {
+            connBadge = '<span class="badge badge-success">🟢 ব্যবহার হচ্ছে (কাউন্টডাউন চলছে)</span>';
+          } else if (inv.status === 'completed') {
+            connBadge = '<span class="badge badge-warning">⏸️ ডিসকানেক্টেড (টাইম স্থগিত)</span>';
+          } else {
+            connBadge = `<span class="badge badge-danger">${inv.status}</span>`;
+          }
+
+          const remTime = formatRemaining(inv.duration_minutes, inv.used_seconds);
+
+          rowsHtml += `
+            <tr>
+              <td>
+                <div style="font-weight: 700;">${inv.id}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">TrxID: <span class="code-pill">${inv.trx_id || 'N/A'}</span></div>
+              </td>
+              <td>
+                <div>📱 ${inv.customer_phone || 'অজানা'}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">MAC: <span class="code-pill" onclick="copyToClipboard('${inv.client_mac}')">${inv.client_mac || 'N/A'}</span></div>
+              </td>
+              <td>
+                <div style="font-weight: 700; color: #10b981;">৳${inv.amount} (${(inv.provider || 'bKash').toUpperCase()})</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${inv.duration_minutes} মিনিট ভাউচার</div>
+              </td>
+              <td>
+                <span style="font-weight: 700; color: #f8fafc;">${remTime}</span>
+              </td>
+              <td>${connBadge}</td>
+              <td>
+                ${inv.client_mac ? `<button class="btn btn-secondary btn-sm" onclick="fillManualMac('${inv.client_mac}')">পাস দিন</button>` : '--'}
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      document.getElementById('invoicesTableBody').innerHTML = rowsHtml;
+      document.getElementById('statRevenue').innerText = `৳${totalRev}`;
+      document.getElementById('statVoucherCount').innerText = `${completedCount} টি সফল ভাউচার পেমেন্ট`;
+    }
+
+    /* Fetch Live Data */
     async function fetchData() {
       try {
         const res = await fetch('/cgi-bin/hotspot-api');
         const data = await res.json();
+        globalData = data;
 
-        // 1. Daemon & System
-        const daemonEl = document.getElementById('statDaemon');
+        // Router Status & Load
+        const daemonEl = document.getElementById('statDaemonBadge');
         if (data.daemon_running) {
-          daemonEl.innerHTML = '<span style="color: var(--success)">🟢 সচল (Active)</span>';
+          daemonEl.innerHTML = '<span style="color: var(--success)">🟢 ডেমন সচল (Active)</span>';
         } else {
-          daemonEl.innerHTML = '<span style="color: var(--danger)">🔴 বন্ধ (Stopped)</span>';
+          daemonEl.innerHTML = '<span style="color: var(--danger)">🔴 ডেমন বন্ধ (Stopped)</span>';
         }
-        document.getElementById('statUptime').innerText = `Uptime: ${data.uptime || '--'} | Load: ${data.load || '--'}`;
+        document.getElementById('statRouterLoad').innerText = `Uptime: ${data.uptime || '--'} | Load: ${data.load || '--'}`;
 
-        // 2. OpenNDS Clients
+        // Global speed cap badge
+        const gDown = parseInt(data.global_down_limit) || 0;
+        const gUp = parseInt(data.global_up_limit) || 0;
+        const capEl = document.getElementById('globalCapBadge');
+        if (gDown > 0) {
+          capEl.innerHTML = `ডিফল্ট ক্যাপ: ⬇️${Math.round(gDown/1024)}M / ⬆️${Math.round(gUp/1024)}M`;
+          capEl.className = 'badge badge-cyan';
+        } else {
+          capEl.innerHTML = 'ডিফল্ট ক্যাপ: 🚀 ফুল স্পিড (আনলিমিটেড)';
+          capEl.className = 'badge badge-success';
+        }
+
+        // Calculate total traffic
         const ndsClients = data.nds_clients && data.nds_clients.clients ? data.nds_clients.clients : {};
-        const clientMacs = Object.keys(ndsClients);
-        document.getElementById('clientCountBadge').innerText = `${clientMacs.length} Devices`;
+        let totalDl = 0;
+        let totalUl = 0;
+        let avgDl = 0;
+        let avgUl = 0;
+        Object.values(ndsClients).forEach(c => {
+          totalDl += (parseInt(c.download_this_session) || 0);
+          totalUl += (parseInt(c.upload_this_session) || 0);
+          avgDl += (parseFloat(c.download_session_avg) || 0);
+          avgUl += (parseFloat(c.upload_session_avg) || 0);
+        });
+        document.getElementById('statTotalTraffic').innerText = formatBytes(totalDl + totalUl);
+        document.getElementById('statTrafficRates').innerText = `⬇️ ${avgDl.toFixed(1)} kB/s  ⬆️ ${avgUl.toFixed(1)} kB/s`;
 
-        let activeCount = 0;
-        let clientRows = '';
-
-        if (clientMacs.length === 0) {
-          clientRows = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">কোনো ওয়াইফাই ডিভাইস কানেক্টেড নেই</td></tr>';
-        } else {
-          clientMacs.forEach(mac => {
-            const c = ndsClients[mac];
-            const isAuth = (c.state || '').toLowerCase() === 'authenticated';
-            if (isAuth) activeCount++;
-
-            const statusBadge = isAuth 
-              ? '<span class="badge badge-success">🟢 অনুমোদিত (Online)</span>'
-              : '<span class="badge badge-warning">🟡 ক্যাপটিভ লগইন পেজে</span>';
-
-            const dl = formatBytes(parseInt(c.download_this_session) || 0);
-            const ul = formatBytes(parseInt(c.upload_this_session) || 0);
-
-            clientRows += `
-              <tr>
-                <td><span class="code-pill">${c.mac}</span></td>
-                <td><span class="code-pill">${c.ip || '--'}</span></td>
-                <td>${statusBadge}</td>
-                <td>⬇️ ${dl} &nbsp; ⬆️ ${ul}</td>
-                <td>
-                  <div style="display: flex; gap: 6px;">
-                    <button class="btn btn-secondary btn-sm" onclick="authMac('${c.mac}', 120)">+২ ঘণ্টা</button>
-                    <button class="btn btn-secondary btn-sm" onclick="authMac('${c.mac}', 1440)">+১ দিন</button>
-                    <button class="btn btn-danger btn-sm" onclick="deauthMac('${c.mac}')">কিক</button>
-                  </div>
-                </td>
-              </tr>
-            `;
-          });
-        }
-        document.getElementById('clientsTableBody').innerHTML = clientRows;
-        document.getElementById('statActiveUsers').innerText = activeCount;
-
-        // 3. Cloudflare Invoices
-        const invoices = Array.isArray(data.invoices) ? data.invoices : [];
-        document.getElementById('invoiceCountBadge').innerText = `${invoices.length} টি ইনভয়েস`;
-
-        let completedInvoices = 0;
-        let totalRev = 0;
-        let invoiceRows = '';
-
-        if (invoices.length === 0) {
-          invoiceRows = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">কোনো ইনভয়েস রেকর্ড পাওয়া যায়নি</td></tr>';
-        } else {
-          invoices.forEach(inv => {
-            if (inv.status === 'completed') {
-              completedInvoices++;
-              totalRev += (inv.amount || 0);
-            }
-
-            let connBadge = '';
-            if (inv.is_connected == 1) {
-              connBadge = '<span class="badge badge-success">🟢 ব্যবহার হচ্ছে (টাইম কাউন্ট সচল)</span>';
-            } else if (inv.status === 'completed') {
-              connBadge = '<span class="badge badge-warning">⏸️ ডিসকানেক্টেড (টাইম স্থগিত)</span>';
-            } else {
-              connBadge = `<span class="badge badge-danger">${inv.status}</span>`;
-            }
-
-            const remTime = formatRemaining(inv.duration_minutes, inv.used_seconds);
-
-            invoiceRows += `
-              <tr>
-                <td>
-                  <div style="font-weight: 700;">${inv.id}</div>
-                  <div style="font-size: 0.75rem; color: var(--text-muted);">TrxID: <span class="code-pill">${inv.trx_id || 'N/A'}</span></div>
-                </td>
-                <td>
-                  <div>📱 ${inv.customer_phone || 'অজানা'}</div>
-                  <div style="font-size: 0.75rem; color: var(--text-muted);">MAC: <span class="code-pill">${inv.client_mac || 'N/A'}</span></div>
-                </td>
-                <td>
-                  <div style="font-weight: 700; color: #10b981;">৳${inv.amount} (${(inv.provider || 'bKash').toUpperCase()})</div>
-                  <div style="font-size: 0.75rem; color: var(--text-muted);">${inv.duration_minutes} মিনিট</div>
-                </td>
-                <td>
-                  <span style="font-weight: 600;">${remTime}</span>
-                </td>
-                <td>${connBadge}</td>
-                <td>
-                  ${inv.client_mac ? `<button class="btn btn-secondary btn-sm" onclick="fillQuickMac('${inv.client_mac}')">পাস দিন</button>` : '--'}
-                </td>
-              </tr>
-            `;
-          });
-        }
-
-        document.getElementById('invoicesTableBody').innerHTML = invoiceRows;
-        document.getElementById('statTotalVouchers').innerText = completedInvoices;
-        document.getElementById('statRevenue').innerText = `৳${totalRev}`;
-
+        renderClients();
+        renderInvoices();
       } catch (err) {
         console.error('Fetch error:', err);
       }
     }
 
-    // Initial load
+    // Initial Fetch
     fetchData();
 
-    // Auto-refresh countdown
+    // Auto-refresh timer
     setInterval(() => {
       refreshSec--;
       if (refreshSec <= 0) {
         refreshSec = 5;
         fetchData();
       }
-      document.getElementById('refreshTimer').innerText = `Auto-refreshing in ${refreshSec}s`;
+      document.getElementById('refreshStatus').innerText = `Auto-refreshing in ${refreshSec}s`;
     }, 1000);
   </script>
 </body>
