@@ -92,8 +92,9 @@ imou-hx21-hotspot/
 │   └── build.gradle.kts           # Gradle Build Config
 ├── router-scripts/
 │   ├── titan-hotspot-daemon.sh    # Router background sync & heartbeat service
-│   ├── hotspot-api                # Router uhttpd CGI backend
-│   └── hotspot.html               # Local Admin Panel UI
+│   ├── hotspot-api                # Router uhttpd CGI backend with Wi-Fi station discovery
+│   ├── hotspot.html               # Modern Cyber Local Admin Panel & Bandwidth Control UI
+│   └── get_client_interface.sh    # Ultra-fast non-blocking OpenNDS client resolver
 ├── TITAN_Hotspot_Admin.apk        # Compiled Android APK
 └── README.md                      # A to Z Project Documentation
 ```

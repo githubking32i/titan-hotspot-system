@@ -874,9 +874,17 @@
             <span>➕</span> গ্রাহককে ম্যানুয়ালি ইন্টারনেট পারমিশন ও স্পিড নির্ধারণ
           </div>
         </div>
-        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
-          যেকোনো ডিভাইসকে সরাসরি কোনো পেমেন্ট ছাড়া এডমিন পারমিশন দিন এবং তার ডাউনলোড স্পিড ক্যাপ নির্ধারণ করে দিন।
-        </p>
+
+        <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 20px; line-height: 1.6;">
+          <div style="font-weight: 700; color: #93c5fd; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <span>💡</span> ম্যানুয়াল এক্সেস কীভাবে কাজ করে?
+          </div>
+          <div style="font-size: 0.82rem; color: #cbd5e1;">
+            <b>১. ইন্টারনেট সরাসরি সক্রিয়:</b> এখান থেকে কোনো ডিভাইসকে পাস দিলে তার ইন্টারনেট সঙ্গে সঙ্গে আনলক হয়ে যায়। তাই ফোনের ব্রাউজারে আলাদা করে কোনো ক্যাপটিভ লগইন পেজ আসবে না—সরাসরি ইউটিউব, গুগল বা ফেসবুক চলবে।<br>
+            <b>২. অবশিষ্ট মেয়াদ ও স্ট্যাটাস চেক:</b> কানেক্টেড ফোনের ব্রাউজার থেকে <a href="http://192.168.50.1:2050" target="_blank" style="color: #38bdf8; text-decoration: underline;">http://192.168.50.1:2050</a> লিংকে গেলে লাইভ বাকি সময় দেখতে পাবেন।<br>
+            <b>৩. লগইন পেজ টেস্ট করতে চাইলে:</b> নিচে থাকা যেকোনো ডিভাইসের পাশে <b>[কিক (Deauth)]</b> বাটনে ক্লিক করলে ইন্টারনেট বন্ধ হয়ে যাবে এবং ফোনে সাথে সাথে ক্যাপটিভ লগইন পেজ পপআপ করবে।
+          </div>
+        </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
           <div class="form-group">
@@ -906,7 +914,10 @@
           </div>
         </div>
 
-        <button class="btn btn-primary" onclick="submitManualGrant()">⚡ ইন্টারনেট এক্সেস অনুমোদন দিন</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-primary" onclick="submitManualGrant()">⚡ ইন্টারনেট এক্সেস অনুমোদন দিন</button>
+          <button class="btn btn-danger" onclick="submitManualKick()">🚫 এই MAC ডিসকানেক্ট / কিক করুন</button>
+        </div>
       </div>
     </div>
 
@@ -1212,6 +1223,17 @@
       switchTab('clients');
     }
 
+    async function submitManualKick() {
+      const mac = document.getElementById('manualMac').value.trim();
+      if (!mac) {
+        showToast('অনুগ্রহ করে সঠিক MAC Address দিন', true);
+        return;
+      }
+      await deauthMac(mac);
+      document.getElementById('manualMac').value = '';
+      switchTab('clients');
+    }
+
     function fillManualMac(mac) {
       document.getElementById('manualMac').value = mac;
       switchTab('manual');
@@ -1220,9 +1242,31 @@
     /* Render Clients Table */
     function renderClients() {
       if (!globalData) return;
-      const ndsClients = globalData.nds_clients && globalData.nds_clients.clients ? globalData.nds_clients.clients : {};
+      const ndsClients = globalData.nds_clients && globalData.nds_clients.clients ? { ...globalData.nds_clients.clients } : {};
       const dhcpMap = globalData.dhcp_map || {};
       const query = (document.getElementById('clientSearch').value || '').toLowerCase().trim();
+
+      // Merge all connected Wi-Fi stations on 2.4G & 5G so every connected device is visible immediately
+      const wifiStations = Array.isArray(globalData.wifi_stations) ? globalData.wifi_stations : [];
+      wifiStations.forEach(st => {
+        const smac = (st.mac || '').toLowerCase();
+        if (smac && !ndsClients[smac]) {
+          const dhcp = dhcpMap[smac] || {};
+          ndsClients[smac] = {
+            mac: smac,
+            ip: dhcp.ip || '--',
+            clientif: st.iface || '',
+            state: 'Preauthenticated',
+            custom: 'NewWiFiStation',
+            download_rate_limit_threshold: null,
+            upload_rate_limit_threshold: null,
+            download_this_session: 0,
+            upload_this_session: 0,
+            download_session_avg: 0,
+            upload_session_avg: 0
+          };
+        }
+      });
 
       let clientMacs = Object.keys(ndsClients);
       let activeCount = 0;

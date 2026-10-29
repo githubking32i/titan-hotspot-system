@@ -9,6 +9,11 @@ if [ "$REQUEST_METHOD" = "OPTIONS" ]; then
     exit 0
 fi
 
+# Clean & normalize MAC helper
+clean_mac() {
+    echo "$1" | tr 'A-Z' 'a-z' | tr '-' ':' | tr -d ' \t\r\n'
+}
+
 if [ "$REQUEST_METHOD" = "POST" ]; then
     read -r POST_DATA
     ACTION=""
@@ -19,11 +24,12 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     CUSTOM=""
     if command -v jsonfilter >/dev/null 2>&1; then
         ACTION=$(echo "$POST_DATA" | jsonfilter -e '@.action' 2>/dev/null)
-        MAC=$(echo "$POST_DATA" | jsonfilter -e '@.mac' 2>/dev/null)
+        RAW_MAC=$(echo "$POST_DATA" | jsonfilter -e '@.mac' 2>/dev/null)
         MINUTES=$(echo "$POST_DATA" | jsonfilter -e '@.minutes' 2>/dev/null)
         DOWN_RATE=$(echo "$POST_DATA" | jsonfilter -e '@.download_rate' 2>/dev/null)
         UP_RATE=$(echo "$POST_DATA" | jsonfilter -e '@.upload_rate' 2>/dev/null)
         CUSTOM=$(echo "$POST_DATA" | jsonfilter -e '@.custom' 2>/dev/null)
+        MAC=$(clean_mac "$RAW_MAC")
     fi
 
     # Helper defaults
@@ -33,9 +39,11 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     [ -z "$CUSTOM" ] && CUSTOM="AdminPanel"
 
     if [ "$ACTION" = "auth" ] && [ -n "$MAC" ]; then
-        # If client is already authenticated, deauth first so ndsctl auth succeeds cleanly
-        ndsctl deauth "$MAC" >/dev/null 2>&1
-        sleep 0.3
+        # Check if client is already authenticated, deauth first so ndsctl auth succeeds cleanly
+        if ndsctl json "$MAC" 2>/dev/null | grep -iq "Authenticated"; then
+            ndsctl deauth "$MAC" >/dev/null 2>&1
+            sleep 0.2
+        fi
         ndsctl auth "$MAC" "$MINUTES" "$UP_RATE" "$DOWN_RATE" 0 0 "$CUSTOM" >/dev/null 2>&1
         echo "{\"success\":true,\"message\":\"MAC $MAC অনুমোদিত ($MINUTES মিনিট, Down: ${DOWN_RATE}k, Up: ${UP_RATE}k)\"}"
         exit 0
@@ -53,7 +61,7 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
             fi
         fi
         ndsctl deauth "$MAC" >/dev/null 2>&1
-        sleep 0.3
+        sleep 0.2
         ndsctl auth "$MAC" "$REMAINING" "$UP_RATE" "$DOWN_RATE" 0 0 "RateLimit_${DOWN_RATE}k" >/dev/null 2>&1
         echo "{\"success\":true,\"message\":\"MAC $MAC এর স্পিড লিমিট সেট হয়েছে (Down: ${DOWN_RATE}kbps, Up: ${UP_RATE}kbps, মেয়াদ: ${REMAINING}মি)\"}"
         exit 0
@@ -106,6 +114,7 @@ GLOBAL_DOWN=$(uci -q get opennds.@opennds[0].download_rate_limit_threshold || ec
 GLOBAL_UP=$(uci -q get opennds.@opennds[0].upload_rate_limit_threshold || echo "0")
 [ -z "$GLOBAL_UP" ] && GLOBAL_UP="0"
 
+# Query OpenNDS JSON with quick retry
 NDS_JSON="{}"
 for i in 1 2 3; do
     TRY_JSON=$(ndsctl json 2>/dev/null)
@@ -115,7 +124,7 @@ for i in 1 2 3; do
             break
             ;;
         *)
-            sleep 0.2
+            sleep 0.1
             ;;
     esac
 done
@@ -123,11 +132,24 @@ done
 # DHCP Hostnames map
 DHCP_MAP="{}"
 if [ -f /tmp/dhcp.leases ]; then
-    DHCP_MAP=$(awk 'BEGIN{printf "{"} {if (n++) printf ","; n_clean=($4=="*"?"":$4); printf "\"%s\":{\"ip\":\"%s\",\"hostname\":\"%s\"}", $2, $3, n_clean} END{printf "}"}' /tmp/dhcp.leases 2>/dev/null)
+    DHCP_MAP=$(awk 'BEGIN{printf "{"} {if (n++) printf ","; n_clean=($4=="*"?"":$4); printf "\"%s\":{\"ip\":\"%s\",\"hostname\":\"%s\"}", tolower($2), $3, n_clean} END{printf "}"}' /tmp/dhcp.leases 2>/dev/null)
     [ -z "$DHCP_MAP" ] && DHCP_MAP="{}"
 fi
 
-# Cloudflare Invoices
+# Live Associated Wi-Fi Stations on both 2.4GHz & 5GHz
+WIFI_STATIONS="[]"
+ST_LIST=$(for IF in phy0-ap1 phy1-ap1; do
+    iw dev "$IF" station dump 2>/dev/null | grep -i Station | awk -v iface="$IF" '{print tolower($2) "|" iface}'
+done)
+if [ -n "$ST_LIST" ]; then
+    WIFI_STATIONS=$(echo "$ST_LIST" | awk -F'|' 'BEGIN{printf "["} {if (n++) printf ","; printf "{\"mac\":\"%s\",\"iface\":\"%s\"}", $1, $2} END{printf "]"}')
+fi
+[ -z "$WIFI_STATIONS" ] && WIFI_STATIONS="[]"
+
+# Source local environment secrets if present
+[ -f /etc/titan-hotspot.env ] && . /etc/titan-hotspot.env
+
+# Cloudflare Invoices (Sanitized placeholder for GitHub / router reads local)
 WORKER_URL="${HOTSPOT_WORKER_URL:-https://YOUR_SUBDOMAIN.workers.dev}"
 ADMIN_TOKEN="${HOTSPOT_ADMIN_TOKEN:-YOUR_ADMIN_SECRET_TOKEN}"
 INVOICES_JSON=$(curl -s -m 3 -H "Authorization: Bearer $ADMIN_TOKEN" "$WORKER_URL/admin/invoices" 2>/dev/null)
@@ -141,6 +163,7 @@ cat << EOF
   "global_down_limit": "$GLOBAL_DOWN",
   "global_up_limit": "$GLOBAL_UP",
   "dhcp_map": $DHCP_MAP,
+  "wifi_stations": $WIFI_STATIONS,
   "nds_clients": $NDS_JSON,
   "invoices": $INVOICES_JSON
 }

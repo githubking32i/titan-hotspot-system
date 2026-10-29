@@ -5,6 +5,7 @@
 # -------------------------------------------------------------
 # Configuration: Set these to match your Cloudflare deployment
 # -------------------------------------------------------------
+[ -f /etc/titan-hotspot.env ] && . /etc/titan-hotspot.env
 WORKER_URL="${HOTSPOT_WORKER_URL:-https://YOUR_SUBDOMAIN.workers.dev}"
 ROUTER_SECRET="${HOTSPOT_ROUTER_SECRET:-YOUR_ROUTER_SECRET_TOKEN}"
 PORTAL_DOMAIN=$(echo "$WORKER_URL" | sed -e 's|^[^/]*//||' -e 's|/.*$||')
@@ -88,16 +89,44 @@ while true; do
             echo "$CMD_RESP" | jsonfilter -e '@[*]' | while read -r CMD; do
                 CID=$(echo "$CMD" | jsonfilter -e '@.id')
                 ACT=$(echo "$CMD" | jsonfilter -e '@.action')
-                CMAC=$(echo "$CMD" | jsonfilter -e '@.mac')
+                RAW_CMAC=$(echo "$CMD" | jsonfilter -e '@.mac')
                 CMIN=$(echo "$CMD" | jsonfilter -e '@.minutes')
+                CDOWN=$(echo "$CMD" | jsonfilter -e '@.download_rate' 2>/dev/null)
+                CUP=$(echo "$CMD" | jsonfilter -e '@.upload_rate' 2>/dev/null)
+                CMAC=$(echo "$RAW_CMAC" | tr 'A-Z' 'a-z' | tr '-' ':' | tr -d ' \t\r\n')
 
-                logger -t "$LOG_TAG" "Executing remote admin command $CID action=$ACT mac=$CMAC minutes=$CMIN"
+                [ -z "$CDOWN" ] && CDOWN=0
+                [ -z "$CUP" ] && CUP=0
+
+                logger -t "$LOG_TAG" "Executing remote admin command $CID action=$ACT mac=$CMAC minutes=$CMIN down=$CDOWN up=$CUP"
 
                 if [ "$ACT" = "auth" ] && [ -n "$CMAC" ]; then
                     [ -z "$CMIN" ] && CMIN=120
-                    ndsctl auth "$CMAC" "$CMIN" >/dev/null 2>&1
+                    if ndsctl json "$CMAC" 2>/dev/null | grep -iq "Authenticated"; then
+                        ndsctl deauth "$CMAC" >/dev/null 2>&1
+                        sleep 0.2
+                    fi
+                    ndsctl auth "$CMAC" "$CMIN" "$CUP" "$CDOWN" 0 0 "RemoteAuth" >/dev/null 2>&1
+                elif [ "$ACT" = "set_bandwidth" ] && [ -n "$CMAC" ]; then
+                    REMAINING=120
+                    CLI_JSON=$(ndsctl json "$CMAC" 2>/dev/null)
+                    if [ -n "$CLI_JSON" ]; then
+                        S_END=$(echo "$CLI_JSON" | jsonfilter -e '@.session_end' 2>/dev/null)
+                        NOW=$(date +%s)
+                        if [ -n "$S_END" ] && [ "$S_END" -gt "$NOW" ] 2>/dev/null; then
+                            REMAINING=$(( (S_END - NOW) / 60 ))
+                            [ "$REMAINING" -lt 5 ] && REMAINING=5
+                        fi
+                    fi
+                    ndsctl deauth "$CMAC" >/dev/null 2>&1
+                    sleep 0.2
+                    ndsctl auth "$CMAC" "$REMAINING" "$CUP" "$CDOWN" 0 0 "RateLimit_${CDOWN}k" >/dev/null 2>&1
                 elif [ "$ACT" = "deauth" ] && [ -n "$CMAC" ]; then
                     ndsctl deauth "$CMAC" >/dev/null 2>&1
+                elif [ "$ACT" = "trust" ] && [ -n "$CMAC" ]; then
+                    ndsctl trust "$CMAC" >/dev/null 2>&1
+                elif [ "$ACT" = "untrust" ] && [ -n "$CMAC" ]; then
+                    ndsctl untrust "$CMAC" >/dev/null 2>&1
                 elif [ "$ACT" = "restart_nds" ]; then
                     /etc/init.d/opennds restart >/dev/null 2>&1 &
                 elif [ "$ACT" = "restart_daemon" ]; then
