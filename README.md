@@ -142,7 +142,7 @@ uci set opennds.@opennds[0].gatewayinterface='br-guest'
 uci set opennds.@opennds[0].gatewayname='WIFI HOTSPOT JOIN TO PURCHASE'
 uci set opennds.@opennds[0].login_option_enabled='1'
 uci set opennds.@opennds[0].gatewayfqdn='disable'
-uci set opennds.@opennds[0].walledgarden_fqdn_list='titan-hotspot.titano.workers.dev'
+uci set opennds.@opennds[0].walledgarden_fqdn_list='YOUR_WORKER_SUBDOMAIN.workers.dev'
 uci set opennds.@opennds[0].walledgarden_port_list='443'
 uci commit opennds
 /etc/init.d/opennds restart
@@ -162,6 +162,12 @@ chmod +x /usr/bin/titan-hotspot-daemon.sh
 
 ### ২. ক্লাউড ব্যাকএন্ড ডিপ্লয়মেন্ট (Cloudflare)
 
+1. `titan-hotspot-cloudflare/wrangler.jsonc` ফাইলে আপনার D1 ডাটাবেস আইডি এবং সিক্রেট টোকেনগুলো বসান:
+   - `ADMIN_TOKEN`: অ্যাডমিন কন্ট্রোল পিন বা সিক্রেট
+   - `ROUTER_SECRET`: রাউটার ও ক্লাউডফ্লেয়ার যোগাযোগের গোপন কি
+   - `SMS_SECRET`: SMS Forwarder এর সিক্রেট কি
+
+2. ডিপ্লয় করতে টার্মিনালে রান করুন:
 ```bash
 cd titan-hotspot-cloudflare
 
@@ -178,9 +184,9 @@ npx wrangler deploy
 
 1. মার্চেন্ট ফোনে **SMS Forwarder** অ্যাপটি ইনস্টল করুন।
 2. নতুন Webhook রুল তৈরি করুন:
-   - **Target URL:** `https://titan-hotspot.titano.workers.dev/API/webhook/sms?secret=titan_sms_secret_2026`
+   - **Target URL:** `https://YOUR_WORKER_SUBDOMAIN.workers.dev/API/webhook/sms?secret=YOUR_SMS_SECRET`
    - **Method:** `POST`
-   - **Header:** `X-SMS-Secret: titan_sms_secret_2026`
+   - **Header:** `X-SMS-Secret: YOUR_SMS_SECRET`
    - **Payload:**
      ```json
      {
@@ -194,10 +200,11 @@ npx wrangler deploy
 
 ### ৪. অ্যান্ড্রয়েড মোবাইল অ্যাপ বিল্ড ও ব্যবহার
 
+- অ্যাপটি ওপেন করলেই **"সার্ভার URL"** এবং **"অ্যাডমিন পিন"** ইনপুট দেওয়ার অপশন পাবেন।
+- যেকোনো ক্লাউডফ্লেয়ার ওয়ার্কারের ইউআরএল (যেমন: `https://YOUR_WORKER_SUBDOMAIN.workers.dev`) দিয়ে সরাসরি যে কেউ এই অ্যাপটি ব্যবহার করতে পারবেন।
 - অ্যাপ সোর্স কোড `TitanHotspotApp` ফোল্ডারে রয়েছে।
 - সরাসরি Android Studio দিয়ে ওপেন করে অথবা টার্মিনালে `./gradlew assembleDebug` রান করে APK তৈরি করা যায়।
-- প্রস্তুতকৃত APK: `TITAN_Hotspot_Admin.apk`।
-- **ডিফল্ট অ্যাডমিন পিন:** `7890`
+- প্রস্তুতকৃত রেডি-টু-ইউজ APK: `TITAN_Hotspot_Admin.apk`।
 
 ---
 
@@ -205,8 +212,8 @@ npx wrangler deploy
 
 | কন্ট্রোল ইন্টারফেস | কীভাবে ব্যবহার করবেন | কাজের পরিধি |
 | :--- | :--- | :--- |
-| **১. অ্যান্ড্রয়েড মোবাইল অ্যাপ** | ফোনে ইনস্টল করা `TITAN Hotspot Admin` অ্যাপ | যেকোনো স্থান থেকে লাইভ মনিটরিং, এক ক্লিকে পারমিশন, ডিভাইস কিক, ভাউচার সার্চ। |
-| **২. ক্লাউড ওয়েব অ্যাডমিন** | ব্রাউজারে `https://titan-hotspot.titano.workers.dev/admin` (পিন: 7890) | যেকোনো কম্পিউটার/মোবাইল থেকে ইন্টারনেট ব্রাউজারের মাধ্যমে সম্পূর্ণ কন্ট্রোল। |
+| **১. অ্যান্ড্রয়েড মোবাইল অ্যাপ** | ফোনে ইনস্টল করা `TITAN Hotspot Admin` অ্যাপ (সার্ভার URL ও PIN দিয়ে লগইন) | যেকোনো স্থান থেকে লাইভ মনিটরিং, এক ক্লিকে পারমিশন, ডিভাইস কিক, ভাউচার সার্চ। |
+| **২. ক্লাউড ওয়েব অ্যাডমিন** | ব্রাউজারে `https://YOUR_WORKER_SUBDOMAIN.workers.dev/admin` | যেকোনো কম্পিউটার/মোবাইল থেকে ইন্টারনেট ব্রাউজারের মাধ্যমে সম্পূর্ণ কন্ট্রোল। |
 | **৩. লোকাল রাউটার প্যানেল** | রাউটার ব্রাউজারে `http://192.168.1.1/hotspot.html` বা LuCI (Services ➔ TITAN Hotspot) | লোকাল নেটওয়ার্কে রাউটারের ভেতরের নিজস্ব অ্যাডমিন প্যানেল। |
 
 ---

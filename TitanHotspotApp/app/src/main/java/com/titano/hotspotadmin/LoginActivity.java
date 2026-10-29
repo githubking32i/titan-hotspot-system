@@ -16,6 +16,7 @@ import com.google.android.material.textfield.TextInputEditText;
 public class LoginActivity extends AppCompatActivity {
 
     private TextInputEditText etPin;
+    private TextInputEditText etServerUrl;
     private MaterialCheckBox cbRemember;
     private MaterialButton btnLogin;
     private ProgressBar pbLoading;
@@ -28,14 +29,20 @@ public class LoginActivity extends AppCompatActivity {
 
         prefs = getSharedPreferences("titan_admin_prefs", MODE_PRIVATE);
         String savedToken = prefs.getString("admin_token", "");
+        String savedUrl = prefs.getString("server_url", "https://titan-hotspot.titano.workers.dev");
         boolean remember = prefs.getBoolean("remember", true);
 
         etPin = findViewById(R.id.etPin);
+        etServerUrl = findViewById(R.id.etServerUrl);
         cbRemember = findViewById(R.id.cbRemember);
         btnLogin = findViewById(R.id.btnLogin);
         pbLoading = findViewById(R.id.pbLoading);
 
         cbRemember.setChecked(remember);
+        if (savedUrl != null && !savedUrl.isEmpty()) {
+            etServerUrl.setText(savedUrl);
+            ApiClient.setBaseUrl(savedUrl);
+        }
 
         if (remember && !savedToken.isEmpty()) {
             etPin.setText(savedToken);
@@ -43,10 +50,14 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         btnLogin.setOnClickListener(v -> {
+            String url = etServerUrl.getText() != null ? etServerUrl.getText().toString().trim() : "";
             String pin = etPin.getText() != null ? etPin.getText().toString().trim() : "";
             if (pin.isEmpty()) {
                 Toast.makeText(this, "অনুগ্রহ করে পিন লিখুন", Toast.LENGTH_SHORT).show();
                 return;
+            }
+            if (!url.isEmpty()) {
+                ApiClient.setBaseUrl(url);
             }
             verifyAndEnter(pin);
         });
@@ -55,6 +66,9 @@ public class LoginActivity extends AppCompatActivity {
     private void verifyAndEnter(String token) {
         btnLogin.setEnabled(false);
         pbLoading.setVisibility(View.VISIBLE);
+
+        String currentUrl = etServerUrl.getText() != null ? etServerUrl.getText().toString().trim() : "";
+        ApiClient.setBaseUrl(currentUrl);
 
         ApiClient.fetchDashboard(token, new ApiClient.ApiCallback<Models.DashboardResponse>() {
             @Override
@@ -65,6 +79,7 @@ public class LoginActivity extends AppCompatActivity {
                 if (cbRemember.isChecked()) {
                     prefs.edit()
                             .putString("admin_token", token)
+                            .putString("server_url", currentUrl)
                             .putBoolean("remember", true)
                             .apply();
                 } else {

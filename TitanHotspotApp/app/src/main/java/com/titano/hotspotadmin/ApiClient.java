@@ -20,7 +20,20 @@ import okhttp3.Response;
 
 public class ApiClient {
 
-    public static final String BASE_URL = "https://titan-hotspot.titano.workers.dev";
+    public static String baseUrl = "https://titan-hotspot.titano.workers.dev";
+
+    public static void setBaseUrl(String url) {
+        if (url != null && !url.trim().isEmpty()) {
+            String u = url.trim();
+            if (!u.startsWith("http://") && !u.startsWith("https://")) {
+                u = "https://" + u;
+            }
+            if (u.endsWith("/")) {
+                u = u.substring(0, u.length() - 1);
+            }
+            baseUrl = u;
+        }
+    }
     private static final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(12, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
@@ -36,7 +49,7 @@ public class ApiClient {
 
     public static void fetchDashboard(String token, ApiCallback<Models.DashboardResponse> callback) {
         Request request = new Request.Builder()
-                .url(BASE_URL + "/api/admin/dashboard")
+                .url(baseUrl + "/api/admin/dashboard")
                 .header("Authorization", "Bearer " + token)
                 .get()
                 .build();
@@ -128,7 +141,7 @@ public class ApiClient {
             body.put("minutes", minutes);
 
             Request request = new Request.Builder()
-                    .url(BASE_URL + "/api/admin/command")
+                    .url(baseUrl + "/api/admin/command")
                     .header("Authorization", "Bearer " + token)
                     .post(RequestBody.create(body.toString(), JSON))
                     .build();

@@ -74,13 +74,13 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Seed default data
+-- Seed default data (Replace with your actual bKash / Nagad numbers)
 INSERT OR IGNORE INTO merchant_accounts (id, provider, account_number, account_type, active) VALUES
-('acc_bkash_main', 'bkash', '01904894390', 'merchant', 1),
-('acc_nagad_main', 'nagad', '01904894390', 'personal', 1);
+('acc_bkash_main', 'bkash', '017XXXXXXXX', 'merchant', 1),
+('acc_nagad_main', 'nagad', '018XXXXXXXX', 'personal', 1);
 
 INSERT OR IGNORE INTO gateway_merchants (id, name, api_key, secret_key) VALUES
-('titan_hotspot', 'TITAN Hotspot Service', 'tp_live_key_hotspot_2026', 'tp_sec_key_hotspot_2026');
+('titan_hotspot', 'TITAN Hotspot Service', 'tp_live_key_sample_2026', 'tp_sec_key_sample_2026');
 
 INSERT OR IGNORE INTO packages (id, name, price, duration_minutes, active) VALUES
 ('hour1', '2 Hours', 10, 120, 1),

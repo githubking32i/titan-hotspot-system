@@ -732,8 +732,8 @@ function parseBkashNagadSMS(text) {
  * Modern High-End Checkout Page for TITAN PAY
  */
 function getCheckoutHTML(invoice, accounts) {
-  const bkashAcc = accounts.find(a => a.provider === 'bkash') || { account_number: '01904894390', account_type: 'merchant' };
-  const nagadAcc = accounts.find(a => a.provider === 'nagad') || { account_number: '01904894390', account_type: 'personal' };
+  const bkashAcc = accounts.find(a => a.provider === 'bkash') || { account_number: '01700000000', account_type: 'merchant' };
+  const nagadAcc = accounts.find(a => a.provider === 'nagad') || { account_number: '01800000000', account_type: 'personal' };
 
   return `<!DOCTYPE html>
 <html lang="bn">
@@ -804,8 +804,8 @@ function getCheckoutHTML(invoice, accounts) {
 
     <div class="qr-container">
       <div class="qr-box">
-        <!-- Dynamic QR Code generated via quickchart / qrserver -->
-        <img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=01904894390" width="130" height="130" alt="Scan QR">
+        <!-- Dynamic QR Code -->
+        <img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${bkashAcc.account_number}" width="130" height="130" alt="Scan QR">
       </div>
       <div style="font-size:12px;color:#94a3b8;margin-top:6px;">অ্যাপ দিয়ে স্ক্যান করুন অথবা নম্বরে পাঠান</div>
     </div>

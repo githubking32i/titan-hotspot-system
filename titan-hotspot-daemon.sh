@@ -2,10 +2,13 @@
 # TITAN HOTSPOT - Router Activation, Usage Heartbeat & Expiry Daemon
 # Location: /usr/bin/titan-hotspot-daemon.sh
 
-WORKER_URL="https://titan-hotspot.titano.workers.dev"
-ROUTER_SECRET="titan_router_secret_2026"
+# -------------------------------------------------------------
+# Configuration: Set these to match your Cloudflare deployment
+# -------------------------------------------------------------
+WORKER_URL="${HOTSPOT_WORKER_URL:-https://YOUR_SUBDOMAIN.workers.dev}"
+ROUTER_SECRET="${HOTSPOT_ROUTER_SECRET:-YOUR_ROUTER_SECRET_TOKEN}"
+PORTAL_DOMAIN=$(echo "$WORKER_URL" | sed -e 's|^[^/]*//||' -e 's|/.*$||')
 LOG_TAG="titan-hotspot"
-PORTAL_DOMAIN="titan-hotspot.titano.workers.dev"
 HEARTBEAT_INTERVAL=30
 
 logger -t "$LOG_TAG" "Titan Hotspot Activation & Usage Accounting Daemon started"

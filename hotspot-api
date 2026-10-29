@@ -58,7 +58,9 @@ fi
 NDS_JSON=$(ndsctl json 2>/dev/null)
 [ -z "$NDS_JSON" ] && NDS_JSON="{}"
 
-INVOICES_JSON=$(curl -s -m 4 -H "Authorization: Bearer titan_admin_secret_2026" "https://titan-hotspot.titano.workers.dev/admin/invoices" 2>/dev/null)
+WORKER_URL="${HOTSPOT_WORKER_URL:-https://YOUR_SUBDOMAIN.workers.dev}"
+ADMIN_TOKEN="${HOTSPOT_ADMIN_TOKEN:-YOUR_ADMIN_SECRET_TOKEN}"
+INVOICES_JSON=$(curl -s -m 4 -H "Authorization: Bearer $ADMIN_TOKEN" "$WORKER_URL/admin/invoices" 2>/dev/null)
 [ -z "$INVOICES_JSON" ] && INVOICES_JSON="[]"
 
 cat << EOF

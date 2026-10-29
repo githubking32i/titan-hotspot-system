@@ -49,11 +49,31 @@
                 android:textSize="13sp" />
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilServerUrl"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:hint="সার্ভার URL (Cloudflare Worker)"
+                app:boxStrokeColor="@color/primary"
+                app:hintTextColor="@color/primary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etServerUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri"
+                    android:text="https://titan-hotspot.titano.workers.dev"
+                    android:textColor="@color/text_main"
+                    android:textSize="13sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilPin"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
+                android:layout_marginTop="12dp"
                 android:hint="অ্যাডমিন পিন / সিক্রেট"
                 app:boxStrokeColor="@color/primary"
                 app:hintTextColor="@color/primary"
