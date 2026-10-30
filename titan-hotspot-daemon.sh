@@ -122,7 +122,6 @@ while true; do
                     [ -z "$CMIN" ] && CMIN=120
                     if ndsctl json "$CMAC" 2>/dev/null | grep -iq "Authenticated"; then
                         ndsctl deauth "$CMAC" >/dev/null 2>&1
-                        sleep 0.2
                     fi
                     ndsctl auth "$CMAC" "$CMIN" "$CUP" "$CDOWN" 0 0 "RemoteAuth" >/dev/null 2>&1
                 elif [ "$ACT" = "set_bandwidth" ] && [ -n "$CMAC" ]; then
@@ -137,7 +136,6 @@ while true; do
                         fi
                     fi
                     ndsctl deauth "$CMAC" >/dev/null 2>&1
-                    sleep 0.2
                     ndsctl auth "$CMAC" "$REMAINING" "$CUP" "$CDOWN" 0 0 "RateLimit_${CDOWN}k" >/dev/null 2>&1
                 elif [ "$ACT" = "deauth" ] && [ -n "$CMAC" ]; then
                     ndsctl deauth "$CMAC" >/dev/null 2>&1
@@ -166,8 +164,9 @@ while true; do
         CLIENTS_JSON="["
         FIRST=1
         
-        # Check active stations connected to both 2.4GHz (phy0-ap1) and 5GHz (phy1-ap1)
-        ACTIVE_MACS=$(for IF in phy0-ap1 phy1-ap1; do iw dev "$IF" station dump 2>/dev/null | grep -i Station | cut -d' ' -f2; done | sort -u)
+        # Check active stations connected to all guest wireless interfaces dynamically
+        GUEST_IFS=$(iw dev | grep Interface | cut -d' ' -f2)
+        ACTIVE_MACS=$(for IF in $GUEST_IFS; do iw dev "$IF" station dump 2>/dev/null | grep -i Station | cut -d' ' -f2; done | sort -u)
         for ST_MAC in $ACTIVE_MACS; do
             if [ -n "$ST_MAC" ]; then
                 # Check if station is authenticated in OpenNDS

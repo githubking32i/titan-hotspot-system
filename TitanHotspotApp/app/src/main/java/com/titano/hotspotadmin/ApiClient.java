@@ -98,6 +98,8 @@ public class ApiClient {
                         res.stats.router_load = json.optString("load", "--");
                     }
 
+                    JSONObject dhcpMap = json.optJSONObject("dhcp_map");
+
                     if (json.has("nds_clients")) {
                         JSONObject nds = json.optJSONObject("nds_clients");
                         if (nds != null && nds.has("clients")) {
@@ -114,6 +116,16 @@ public class ApiClient {
                                 ci.upload_bytes = cObj.optLong("upload_this_session", 0);
                                 ci.down_rate_limit = cObj.optString("download_rate_limit_threshold", "");
                                 ci.up_rate_limit = cObj.optString("upload_rate_limit_threshold", "");
+
+                                if (dhcpMap != null) {
+                                    JSONObject dInfo = dhcpMap.optJSONObject(mac.toLowerCase());
+                                    if (dInfo != null) {
+                                        ci.name = dInfo.optString("hostname", "");
+                                    }
+                                }
+                                if (ci.name == null || ci.name.isEmpty()) {
+                                    ci.name = "authenticated".equalsIgnoreCase(ci.state) ? "স্মার্টফোন / ডিভাইস" : "নতুন সংযোগ";
+                                }
                                 res.clients.add(ci);
                             }
                         }

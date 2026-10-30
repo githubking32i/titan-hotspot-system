@@ -29,14 +29,23 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tvDeviceName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="স্মার্টফোন / ডিভাইস"
+                    android:textColor="@color/text_main"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
                     android:id="@+id/tvMac"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
                     android:fontFamily="monospace"
                     android:text="9a:d0:17:fe:94:e2"
                     android:textColor="@color/primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tvIp"

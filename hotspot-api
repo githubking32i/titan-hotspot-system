@@ -14,7 +14,8 @@ STORAGE_DIR="/etc/titan-hotspot"
 mkdir -p "$STORAGE_DIR"
 VOUCHERS_DB="$STORAGE_DIR/vouchers.db"
 TRIALS_DB="$STORAGE_DIR/trials.db"
-touch "$VOUCHERS_DB" "$TRIALS_DB"
+CUSTOM_NAMES_FILE="$STORAGE_DIR/custom_names.db"
+touch "$VOUCHERS_DB" "$TRIALS_DB" "$CUSTOM_NAMES_FILE"
 
 # Clean & normalize MAC helper
 clean_mac() {
@@ -31,6 +32,7 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     CUSTOM=""
     VOUCHER_CODE=""
     V_COUNT=""
+    DEVICE_NAME=""
     if command -v jsonfilter >/dev/null 2>&1; then
         ACTION=$(echo "$POST_DATA" | jsonfilter -e '@.action' 2>/dev/null)
         RAW_MAC=$(echo "$POST_DATA" | jsonfilter -e '@.mac' 2>/dev/null)
@@ -38,6 +40,7 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
         DOWN_RATE=$(echo "$POST_DATA" | jsonfilter -e '@.download_rate' 2>/dev/null)
         UP_RATE=$(echo "$POST_DATA" | jsonfilter -e '@.upload_rate' 2>/dev/null)
         CUSTOM=$(echo "$POST_DATA" | jsonfilter -e '@.custom' 2>/dev/null)
+        DEVICE_NAME=$(echo "$POST_DATA" | jsonfilter -e '@.name' 2>/dev/null)
         VOUCHER_CODE=$(echo "$POST_DATA" | jsonfilter -e '@.voucher_code' 2>/dev/null | tr 'a-z' 'A-Z' | tr -d ' \t\r\n')
         V_COUNT=$(echo "$POST_DATA" | jsonfilter -e '@.count' 2>/dev/null)
         MAC=$(clean_mac "$RAW_MAC")
@@ -53,7 +56,6 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     if [ "$ACTION" = "auth" ] && [ -n "$MAC" ]; then
         if ndsctl json "$MAC" 2>/dev/null | grep -iq "Authenticated"; then
             ndsctl deauth "$MAC" >/dev/null 2>&1
-            sleep 0.2
         fi
         ndsctl auth "$MAC" "$MINUTES" "$UP_RATE" "$DOWN_RATE" 0 0 "$CUSTOM" >/dev/null 2>&1
         echo "{\"success\":true,\"message\":\"MAC $MAC অনুমোদিত ($MINUTES মিনিট, Down: ${DOWN_RATE}k, Up: ${UP_RATE}k)\"}"
@@ -86,7 +88,6 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
         # Grant 10 minutes free trial with 5M down / 2M up
         if ndsctl json "$MAC" 2>/dev/null | grep -iq "Authenticated"; then
             ndsctl deauth "$MAC" >/dev/null 2>&1
-            sleep 0.2
         fi
         ndsctl auth "$MAC" 10 2048 5120 0 0 "FreeTrial10M" >/dev/null 2>&1
         echo "{\"success\":true,\"message\":\"অভিনন্দন! ১০ মিনিটের ফ্রি ট্রায়াল ইন্টারনেট সক্রিয় হয়েছে!\"}"
@@ -122,7 +123,6 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
         # Authenticate device
         if ndsctl json "$MAC" 2>/dev/null | grep -iq "Authenticated"; then
             ndsctl deauth "$MAC" >/dev/null 2>&1
-            sleep 0.2
         fi
         ndsctl auth "$MAC" "$V_MINS" "$V_UP" "$V_DOWN" 0 0 "Voucher_${VOUCHER_CODE}" >/dev/null 2>&1
         echo "{\"success\":true,\"message\":\"ভাউচার সফল! $V_MINS মিনিটের জন্য ইন্টারনেট চালু হয়েছে।\"}"
@@ -174,7 +174,6 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
             fi
         fi
         ndsctl deauth "$MAC" >/dev/null 2>&1
-        sleep 0.2
         ndsctl auth "$MAC" "$REMAINING" "$UP_RATE" "$DOWN_RATE" 0 0 "RateLimit_${DOWN_RATE}k" >/dev/null 2>&1
         echo "{\"success\":true,\"message\":\"MAC $MAC এর স্পিড লিমিট সেট হয়েছে (Down: ${DOWN_RATE}kbps, Up: ${UP_RATE}kbps, মেয়াদ: ${REMAINING}মি)\"}"
         exit 0
@@ -194,6 +193,14 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     elif [ "$ACTION" = "untrust" ] && [ -n "$MAC" ]; then
         ndsctl untrust "$MAC" >/dev/null 2>&1
         echo "{\"success\":true,\"message\":\"MAC $MAC কে ট্রাস্টেড তালিকা থেকে সরানো হয়েছে\"}"
+        exit 0
+
+    # 9. Set Custom Friendly Device Name
+    elif [ "$ACTION" = "set_device_name" ] && [ -n "$MAC" ] && [ -n "$DEVICE_NAME" ]; then
+        grep -v "^$MAC," "$CUSTOM_NAMES_FILE" > "$CUSTOM_NAMES_FILE.tmp" 2>/dev/null
+        echo "$MAC,$DEVICE_NAME" >> "$CUSTOM_NAMES_FILE.tmp"
+        mv "$CUSTOM_NAMES_FILE.tmp" "$CUSTOM_NAMES_FILE"
+        echo "{\"success\":true,\"message\":\"ডিভাইসের নাম '$DEVICE_NAME' সংরক্ষণ করা হয়েছে\"}"
         exit 0
 
     elif [ "$ACTION" = "set_global_limits" ]; then
@@ -239,21 +246,57 @@ for i in 1 2 3; do
             break
             ;;
         *)
-            sleep 0.1
+            :
             ;;
     esac
 done
 
-# DHCP Hostnames map
+# DHCP Hostnames map & Custom Assigned Names
 DHCP_MAP="{}"
-if [ -f /tmp/dhcp.leases ]; then
-    DHCP_MAP=$(awk 'BEGIN{printf "{"} {if (n++) printf ","; n_clean=($4=="*"?"":$4); printf "\"%s\":{\"ip\":\"%s\",\"hostname\":\"%s\"}", tolower($2), $3, n_clean} END{printf "}"}' /tmp/dhcp.leases 2>/dev/null)
+if [ -f /tmp/dhcp.leases ] || [ -f "$CUSTOM_NAMES_FILE" ]; then
+    DHCP_MAP=$(awk '
+    BEGIN{printf "{"}
+    FILENAME=="/tmp/dhcp.leases" {
+        mac=tolower($2);
+        ip=$3;
+        name=($4=="*"?"":$4);
+        if (mac != "") {
+            ip_map[mac]=ip;
+            name_map[mac]=name;
+        }
+    }
+    FILENAME=="'"$CUSTOM_NAMES_FILE"'" {
+        idx=index($0, ",");
+        if (idx > 0) {
+            mac=tolower(substr($0, 1, idx-1));
+            name=substr($0, idx+1);
+            if (mac != "" && name != "") {
+                custom_map[mac]=name;
+            }
+        }
+    }
+    END {
+        count=0;
+        for (m in ip_map) {
+            fin_name = (custom_map[m] != "" ? custom_map[m] : name_map[m]);
+            if (count++) printf ",";
+            printf "\"%s\":{\"ip\":\"%s\",\"hostname\":\"%s\"}", m, ip_map[m], fin_name;
+        }
+        for (m in custom_map) {
+            if (!(m in ip_map)) {
+                if (count++) printf ",";
+                printf "\"%s\":{\"ip\":\"--\",\"hostname\":\"%s\"}", m, custom_map[m];
+            }
+        }
+        printf "}"
+    }' /tmp/dhcp.leases "$CUSTOM_NAMES_FILE" 2>/dev/null)
     [ -z "$DHCP_MAP" ] && DHCP_MAP="{}"
 fi
 
-# Live Associated Wi-Fi Stations on both 2.4GHz & 5GHz
+# Live Associated Wi-Fi Stations on all active guest radios dynamically
 WIFI_STATIONS="[]"
-ST_LIST=$(for IF in phy0-ap1 phy1-ap1; do
+GUEST_IFS=$(iw dev | grep Interface | cut -d' ' -f2)
+ST_LIST=$(for IF in $GUEST_IFS; do
     iw dev "$IF" station dump 2>/dev/null | grep -i Station | awk -v iface="$IF" '{print tolower($2) "|" iface}'
 done)
 if [ -n "$ST_LIST" ]; then

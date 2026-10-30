@@ -1211,6 +1211,18 @@
       setTimeout(fetchData, 2000);
     }
 
+    async function promptDeviceName(mac, currentName) {
+      const def = (currentName && !currentName.includes('স্মার্টফোন') && !currentName.includes('নতুন সংযোগ')) ? currentName : '';
+      const newName = prompt(`'${mac}' ডিভাইসের জন্য পরিচিত নাম দিন:`, def);
+      if (newName === null) return;
+      const trimmed = newName.trim();
+      if (!trimmed) return;
+      showToast('নাম সংরক্ষণ করা হচ্ছে...');
+      const res = await sendApi('set_device_name', { mac, name: trimmed });
+      showToast(res.message || 'নাম সংরক্ষিত হয়েছে');
+      setTimeout(fetchData, 600);
+    }
+
     /* Modal functions */
     function openSpeedModal(mac, name, currentDownKbps, currentUpKbps) {
       currentModalMac = mac;
@@ -1381,7 +1393,9 @@
           const c = ndsClients[mac];
           const isAuth = (c.state || '').toLowerCase() === 'authenticated';
           const hostInfo = dhcpMap[mac] || {};
-          const deviceName = hostInfo.hostname || (isAuth ? 'স্মার্টফোন / ডিভাইস' : 'নতুন সংযোগ');
+          const isCustom = Boolean(hostInfo.hostname);
+          const rawDeviceName = hostInfo.hostname || (isAuth ? 'স্মার্টফোন / ডিভাইস' : 'নতুন সংযোগ');
+          const safeDeviceName = rawDeviceName.replace(/'/g, "\\'");
           const is5G = (c.clientif || '').includes('phy1');
 
           const bandBadge = is5G 
@@ -1403,8 +1417,8 @@
             <tr>
               <td>
                 <div class="device-title">
-                  <span>${deviceName.includes('Laptop') ? '💻' : '📱'}</span>
-                  <span>${deviceName}</span>
+                  <span>${rawDeviceName.includes('Laptop') || rawDeviceName.includes('DESKTOP') ? '💻' : '📱'}</span>
+                  <span style="cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.3);" title="নাম পরিবর্তন করতে ক্লিক করুন" onclick="promptDeviceName('${c.mac}', '${safeDeviceName}')">${rawDeviceName} ✏️</span>
                   ${bandBadge}
                 </div>
                 <div class="device-sub">

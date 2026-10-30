@@ -15,6 +15,7 @@ public class Models {
     }
 
     public static class ClientInfo {
+        public String name = "";
         public String mac = "";
         public String ip = "";
         public String state = "";

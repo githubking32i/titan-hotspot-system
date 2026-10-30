@@ -42,6 +42,8 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
         Models.ClientInfo item = list.get(position);
+        String dName = (item.name != null && !item.name.isEmpty()) ? item.name : "স্মার্টফোন / ডিভাইস";
+        h.tvDeviceName.setText(dName);
         h.tvMac.setText(item.mac);
         h.tvIp.setText("IP: " + (item.ip.isEmpty() ? "--" : item.ip));
 
@@ -77,11 +79,12 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvMac, tvIp, tvStatusBadge, tvTraffic;
+        TextView tvDeviceName, tvMac, tvIp, tvStatusBadge, tvTraffic;
         MaterialButton btnAuth2h, btnAuth1d, btnKick;
 
         public ViewHolder(@NonNull View v) {
             super(v);
+            tvDeviceName = v.findViewById(R.id.tvDeviceName);
             tvMac = v.findViewById(R.id.tvMac);
             tvIp = v.findViewById(R.id.tvIp);
             tvStatusBadge = v.findViewById(R.id.tvStatusBadge);
