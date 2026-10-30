@@ -1019,7 +1019,20 @@ function getHotspotPortalHTML(params, packages) {
         `).join('')}
       </div>
 
-      <button class="btn-buy" id="payBtn" onclick="createCheckout()">⚡ পেমেন্ট করুন ও চালু করুন</button>
+      <button class="btn-buy" id="payBtn" onclick="createCheckout()">⚡ বিকাশ / নগদ দিয়ে পেমেন্ট করুন</button>
+
+      <!-- Quick Actions: 10 Min Free Trial & Physical Voucher Code -->
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid #1e293b; display:flex; flex-direction:column; gap:10px;">
+        <button class="btn-buy" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; font-size:14px; padding:11px;" onclick="claimFreeTrial()">🎁 ১০ মিনিট ফ্রি ট্রায়াল নিন (Free Trial)</button>
+
+        <div style="background:#0b1120; border:1px solid #1e293b; border-radius:12px; padding:12px;">
+          <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">🎫 দোকান থেকে কেনা ভাউচার পিন আছে?</div>
+          <div style="display:flex; gap:6px;">
+            <input type="text" id="voucherCodeInput" placeholder="যেমন: TITAN-9281" style="flex:1; background:#131b2e; border:1px solid #334155; border-radius:8px; padding:8px 10px; color:#fff; font-family:monospace; text-transform:uppercase; font-size:13px;">
+            <button onclick="redeemVoucher()" style="background:#0284c7; color:#fff; border:none; border-radius:8px; padding:8px 14px; font-weight:700; font-size:12px; cursor:pointer;">প্রবেশ</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1143,6 +1156,53 @@ function getHotspotPortalHTML(params, packages) {
     function triggerConnect() {
       if (authaction && tok) {
         window.location.href = authaction + '?tok=' + tok;
+      }
+    }
+
+    async function claimFreeTrial() {
+      if (!clientmac) {
+        alert('আপনার ডিভাইসের MAC এড্রেস পাওয়া যায়নি। অনুগ্রহ করে ওয়াইফাই রি-কানেক্ট করুন।');
+        return;
+      }
+      try {
+        const res = await fetch('http://192.168.50.1/cgi-bin/hotspot-api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'claim_trial', mac: clientmac })
+        });
+        const data = await res.json();
+        alert(data.message || 'রেসপন্স পাওয়া গেছে');
+        if (data.success) {
+          triggerConnect();
+        }
+      } catch(e) {
+        alert('রাউটারের সাথে সংযোগ স্থাপন সম্ভব হয়নি। আপনি কি হটস্পট ওয়াইফাইতে আছেন?');
+      }
+    }
+
+    async function redeemVoucher() {
+      const code = (document.getElementById('voucherCodeInput').value || '').trim().toUpperCase();
+      if (!code) {
+        alert('অনুগ্রহ করে সঠিক ভাউচার কোড লিখুন');
+        return;
+      }
+      if (!clientmac) {
+        alert('আপনার ডিভাইসের MAC এড্রেস পাওয়া যায়নি।');
+        return;
+      }
+      try {
+        const res = await fetch('http://192.168.50.1/cgi-bin/hotspot-api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'redeem_voucher', mac: clientmac, voucher_code: code })
+        });
+        const data = await res.json();
+        alert(data.message || 'ভাউচার প্রসেস হয়েছে');
+        if (data.success) {
+          triggerConnect();
+        }
+      } catch(e) {
+        alert('রাউটারের সাথে সংযোগ করা যাচ্ছে না।');
       }
     }
   </script>

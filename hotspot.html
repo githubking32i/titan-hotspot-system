@@ -719,6 +719,10 @@
         <span>📡</span> কানেক্টেড ডিভাইস ও স্পিড কন্ট্রোল
         <span class="tab-badge" id="tabClientsBadge">0</span>
       </button>
+      <button class="tab-item" onclick="switchTab('vouchers', this)">
+        <span>🎫</span> ভাউচার কোড ও স্ক্র্যাচ কার্ড
+        <span class="tab-badge" id="tabVouchersBadge">0</span>
+      </button>
       <button class="tab-item" onclick="switchTab('invoices', this)">
         <span>🧾</span> সাবস্ক্রিপশন ও সময় হিসাব
         <span class="tab-badge" id="tabInvoicesBadge">0</span>
@@ -727,7 +731,7 @@
         <span>⚡</span> গ্লোবাল স্পিড পলিসি সেটিংস
       </button>
       <button class="tab-item" onclick="switchTab('manual', this)">
-        <span>➕</span> ম্যানুয়াল পাস দিন
+        <span>➕</span> ম্যানুয়াল পাস ও ট্রায়াল
       </button>
     </div>
 
@@ -768,6 +772,77 @@
             <tbody id="clientsTableBody">
               <tr>
                 <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">তথ্য লোড হচ্ছে...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Vouchers & Scratch Cards -->
+    <div id="tab-vouchers" class="tab-content" style="display: none;">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <span>🎫</span> ভাউচার কোড ও স্ক্র্যাচ কার্ড জেনারেটর (Offline Selling)
+          </div>
+          <span class="badge badge-cyan" id="voucherCountBadge">0 Vouchers</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.86rem; margin-bottom: 16px;">
+          যাদের নিজস্ব বিকাশ/নগদ নেই তাদের কাছে ক্যাশ টাকায় বিক্রির জন্য এখান থেকে ভাউচার পিন তৈরি করুন অথবা এক ক্লিকে প্রিন্ট করে স্ক্র্যাচ কার্ড বানিয়ে দিন।
+        </p>
+
+        <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+          <h4 style="font-size: 0.95rem; margin-bottom: 12px; color: #38bdf8;">নতুন ভাউচার ব্যাচ তৈরি করুন</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto; gap: 12px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">ভাউচার সংখ্যা (Quantity)</label>
+              <input type="number" id="vGenCount" class="form-control" value="5" min="1" max="50">
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">প্যাকেজ মেয়াদ (Duration)</label>
+              <select id="vGenMins" class="form-control">
+                <option value="120" selected>২ ঘণ্টা (৳১০)</option>
+                <option value="1440">১ দিন / ২৪ ঘণ্টা (৳২৫)</option>
+                <option value="10080">৭ দিন / ১ সপ্তাহ (৳৫০)</option>
+                <option value="43200">৩০ দিন / ১ মাস (৳১৫০)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">স্পিড লিমিট ক্যাপ (Speed)</label>
+              <select id="vGenSpeed" class="form-control">
+                <option value="5120:2048" selected>⚡ 5M Down / 2M Up</option>
+                <option value="10240:5120">⚡ 10M Down / 5M Up</option>
+                <option value="0:0">🚀 ফুল স্পিড</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="generateVoucherBatch()">➕ ভাউচার তৈরি করুন</button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="font-size: 0.9rem; font-weight: 700;">সংরক্ষিত ভাউচার তালিকা</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" onclick="printVouchers()">🖨️ প্রিন্ট স্ক্র্যাচ কার্ড</button>
+            <button class="btn btn-danger btn-sm" onclick="clearUsedVouchers()">🗑️ ব্যবহৃত কোড মুছুন</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ভাউচার কোড (PIN)</th>
+                <th>মেয়াদ ও প্যাকেজ</th>
+                <th>ব্যান্ডউইথ স্পিড</th>
+                <th>স্ট্যাটাস</th>
+                <th>ব্যবহারকারী MAC</th>
+                <th>অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="vouchersTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">কোনো ভাউচার পাওয়া যায়নি</td>
               </tr>
             </tbody>
           </table>
@@ -1430,6 +1505,113 @@
       document.getElementById('statVoucherCount').innerText = `${completedCount} টি সফল ভাউচার পেমেন্ট`;
     }
 
+    /* Render Vouchers Table */
+    function renderVouchers() {
+      if (!globalData) return;
+      const vouchers = Array.isArray(globalData.vouchers) ? globalData.vouchers : [];
+      document.getElementById('tabVouchersBadge').innerText = vouchers.length;
+      document.getElementById('voucherCountBadge').innerText = `${vouchers.length} Vouchers`;
+
+      let rowsHtml = '';
+      if (vouchers.length === 0) {
+        rowsHtml = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">কোনো ভাউচার রেকর্ড পাওয়া যায়নি</td></tr>`;
+      } else {
+        vouchers.forEach(v => {
+          const isUnused = (v.status || '').toLowerCase() === 'unused';
+          const statusBadge = isUnused
+            ? '<span class="badge badge-success">🟢 অব্যবহৃত (বিক্রয়যোগ্য)</span>'
+            : '<span class="badge badge-warning">🔴 ব্যবহৃত</span>';
+
+          const speedBadge = formatSpeedCap(v.down_kbps, v.up_kbps);
+          const durText = v.minutes >= 1440 ? `${Math.round(v.minutes/1440)} দিন` : `${Math.round(v.minutes/60)} ঘণ্টা`;
+
+          rowsHtml += `
+            <tr>
+              <td>
+                <span class="code-pill" style="font-size: 1rem; font-weight: 800; letter-spacing: 1px;" onclick="copyToClipboard('${v.code}')">${v.code}</span>
+              </td>
+              <td>
+                <div style="font-weight: 700;">${durText}</div>
+                <div style="font-size: 0.74rem; color: var(--text-muted);">${v.minutes} মিনিট</div>
+              </td>
+              <td>${speedBadge}</td>
+              <td>${statusBadge}</td>
+              <td>
+                <span class="code-pill">${v.used_by && v.used_by !== 'none' ? v.used_by : '--'}</span>
+              </td>
+              <td>
+                ${isUnused ? `<button class="btn btn-secondary btn-sm" onclick="copyToClipboard('${v.code}')">কপি PIN</button>` : '--'}
+              </td>
+            </tr>
+          `;
+        });
+      }
+      document.getElementById('vouchersTableBody').innerHTML = rowsHtml;
+    }
+
+    async function generateVoucherBatch() {
+      const count = parseInt(document.getElementById('vGenCount').value) || 5;
+      const minutes = parseInt(document.getElementById('vGenMins').value) || 120;
+      const speed = document.getElementById('vGenSpeed').value.split(':');
+      const downRate = parseInt(speed[0]) || 5120;
+      const upRate = parseInt(speed[1]) || 2048;
+
+      showToast(`${count} টি ভাউচার তৈরি হচ্ছে...`);
+      const res = await sendApi('generate_vouchers', {
+        count: count,
+        minutes: minutes,
+        download_rate: downRate,
+        upload_rate: upRate
+      });
+      showToast(res.message || 'ভাউচার তৈরি সম্পন্ন');
+      fetchData();
+    }
+
+    async function clearUsedVouchers() {
+      if (!confirm('আপনি কি নিশ্চিতভাবে সব ব্যবহৃত ভাউচার কোড মুছে ফেলতে চান?')) return;
+      const res = await sendApi('clear_used_vouchers');
+      showToast(res.message || 'ক্লিয়ার সম্পন্ন');
+      fetchData();
+    }
+
+    function printVouchers() {
+      if (!globalData || !Array.isArray(globalData.vouchers) || globalData.vouchers.length === 0) {
+        showToast('প্রিন্ট করার মতো কোনো ভাউচার নেই', true);
+        return;
+      }
+      const unused = globalData.vouchers.filter(v => (v.status || '').toLowerCase() === 'unused');
+      if (unused.length === 0) {
+        showToast('সব ভাউচার ইতিমধ্যে ব্যবহার হয়ে গেছে', true);
+        return;
+      }
+
+      let printWin = window.open('', '', 'width=800,height=600');
+      let cardsHtml = '';
+      unused.forEach(v => {
+        const durText = v.minutes >= 1440 ? `${Math.round(v.minutes/1440)} দিন` : `${Math.round(v.minutes/60)} ঘণ্টা`;
+        cardsHtml += `
+          <div style="border: 2px dashed #0284c7; border-radius: 10px; padding: 14px; width: 220px; text-align: center; font-family: sans-serif; background: #fff; color: #000; page-break-inside: avoid;">
+            <div style="font-weight: 800; font-size: 14px; color: #0284c7;">⚡ TITAN HOTSPOT</div>
+            <div style="font-size: 11px; color: #666; margin: 4px 0;">ইন্টারনেট এক্সেস স্ক্র্যাচ কার্ড</div>
+            <div style="font-size: 13px; font-weight: bold; background: #f0f9ff; padding: 4px; border-radius: 6px; margin: 6px 0;">প্যাকেজ: ${durText}</div>
+            <div style="border: 1px solid #ddd; background: #eee; padding: 8px; font-size: 16px; font-weight: 800; letter-spacing: 2px; border-radius: 6px; margin: 8px 0; font-family: monospace;">
+              ${v.code}
+            </div>
+            <div style="font-size: 10px; color: #888;">ওয়াইফাইতে কানেক্ট করে পোর্টাল পেজে PIN দিন</div>
+          </div>
+        `;
+      });
+
+      printWin.document.write(`
+        <html><head><title>TITAN Hotspot Vouchers</title></head>
+        <body style="display:flex; flex-wrap:wrap; gap:16px; padding:20px;">
+          ${cardsHtml}
+          <script>window.onload = function() { window.print(); }<\/script>
+        </body></html>
+      `);
+      printWin.document.close();
+    }
+
     /* Fetch Live Data */
     async function fetchData() {
       try {
@@ -1474,6 +1656,7 @@
         document.getElementById('statTrafficRates').innerText = `⬇️ ${avgDl.toFixed(1)} kB/s  ⬆️ ${avgUl.toFixed(1)} kB/s`;
 
         renderClients();
+        renderVouchers();
         renderInvoices();
       } catch (err) {
         console.error('Fetch error:', err);

@@ -8,11 +8,22 @@
 [ -f /etc/titan-hotspot.env ] && . /etc/titan-hotspot.env
 WORKER_URL="${HOTSPOT_WORKER_URL:-https://YOUR_SUBDOMAIN.workers.dev}"
 ROUTER_SECRET="${HOTSPOT_ROUTER_SECRET:-YOUR_ROUTER_SECRET_TOKEN}"
+TELEGRAM_BOT_TOKEN="${HOTSPOT_TELEGRAM_BOT_TOKEN:-}"
+TELEGRAM_CHAT_ID="${HOTSPOT_TELEGRAM_CHAT_ID:-}"
 PORTAL_DOMAIN=$(echo "$WORKER_URL" | sed -e 's|^[^/]*//||' -e 's|/.*$||')
 LOG_TAG="titan-hotspot"
 HEARTBEAT_INTERVAL=30
 
 logger -t "$LOG_TAG" "Titan Hotspot Activation & Usage Accounting Daemon started"
+
+send_telegram() {
+    [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ] && return 0
+    TEXT="$1"
+    curl -s -m 5 -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+        -d "chat_id=${TELEGRAM_CHAT_ID}" \
+        -d "text=${TEXT}" \
+        -d "parse_mode=HTML" >/dev/null 2>&1 &
+}
 
 sync_walled_garden() {
     if nft list set ip nds_filter walledgarden >/dev/null 2>&1; then
@@ -22,6 +33,12 @@ sync_walled_garden() {
         for ip in $(nslookup api.qrserver.com 1.1.1.1 2>/dev/null | grep Address | awk '{print $2}' | grep -E '^[0-9]'); do
             nft add element ip nds_filter walledgarden { "$ip" } 2>/dev/null
         done
+        # Whitelist Telegram API if bot is configured
+        if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+            for ip in $(nslookup api.telegram.org 1.1.1.1 2>/dev/null | grep Address | awk '{print $2}' | grep -E '^[0-9]'); do
+                nft add element ip nds_filter walledgarden { "$ip" } 2>/dev/null
+            done
+        fi
     fi
 }
 
@@ -75,6 +92,7 @@ while true; do
                         -H "X-Router-Secret: $ROUTER_SECRET" \
                         -d "{\"payment_id\":\"$PID\",\"duration_minutes\":$DUR}" \
                         "$WORKER_URL/api/router/ack-auth" >/dev/null 2>&1
+                    send_telegram "💰 <b>পেমেন্ট সফল ও ইন্টারনেট চালু!</b>%0A🆔 Invoice: <code>$PID</code>%0A📱 MAC: <code>$MAC</code>%0A⏱️ মেয়াদ: $DUR মিনিট"
                 else
                     logger -t "$LOG_TAG" "Failed to authorize $MAC / $IP in OpenNDS (retrying next cycle)"
                 fi

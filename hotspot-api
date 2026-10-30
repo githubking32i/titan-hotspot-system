@@ -9,6 +9,13 @@ if [ "$REQUEST_METHOD" = "OPTIONS" ]; then
     exit 0
 fi
 
+# Storage files
+STORAGE_DIR="/etc/titan-hotspot"
+mkdir -p "$STORAGE_DIR"
+VOUCHERS_DB="$STORAGE_DIR/vouchers.db"
+TRIALS_DB="$STORAGE_DIR/trials.db"
+touch "$VOUCHERS_DB" "$TRIALS_DB"
+
 # Clean & normalize MAC helper
 clean_mac() {
     echo "$1" | tr 'A-Z' 'a-z' | tr '-' ':' | tr -d ' \t\r\n'
@@ -22,6 +29,8 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     DOWN_RATE=""
     UP_RATE=""
     CUSTOM=""
+    VOUCHER_CODE=""
+    V_COUNT=""
     if command -v jsonfilter >/dev/null 2>&1; then
         ACTION=$(echo "$POST_DATA" | jsonfilter -e '@.action' 2>/dev/null)
         RAW_MAC=$(echo "$POST_DATA" | jsonfilter -e '@.mac' 2>/dev/null)
@@ -29,6 +38,8 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
         DOWN_RATE=$(echo "$POST_DATA" | jsonfilter -e '@.download_rate' 2>/dev/null)
         UP_RATE=$(echo "$POST_DATA" | jsonfilter -e '@.upload_rate' 2>/dev/null)
         CUSTOM=$(echo "$POST_DATA" | jsonfilter -e '@.custom' 2>/dev/null)
+        VOUCHER_CODE=$(echo "$POST_DATA" | jsonfilter -e '@.voucher_code' 2>/dev/null | tr 'a-z' 'A-Z' | tr -d ' \t\r\n')
+        V_COUNT=$(echo "$POST_DATA" | jsonfilter -e '@.count' 2>/dev/null)
         MAC=$(clean_mac "$RAW_MAC")
     fi
 
@@ -38,8 +49,8 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     [ -z "$UP_RATE" ] && UP_RATE=0
     [ -z "$CUSTOM" ] && CUSTOM="AdminPanel"
 
+    # 1. Standard Auth
     if [ "$ACTION" = "auth" ] && [ -n "$MAC" ]; then
-        # Check if client is already authenticated, deauth first so ndsctl auth succeeds cleanly
         if ndsctl json "$MAC" 2>/dev/null | grep -iq "Authenticated"; then
             ndsctl deauth "$MAC" >/dev/null 2>&1
             sleep 0.2
@@ -48,8 +59,110 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
         echo "{\"success\":true,\"message\":\"MAC $MAC অনুমোদিত ($MINUTES মিনিট, Down: ${DOWN_RATE}k, Up: ${UP_RATE}k)\"}"
         exit 0
 
+    # 2. Free Trial Activation (10 mins once per 24 hours per MAC)
+    elif [ "$ACTION" = "claim_trial" ] && [ -n "$MAC" ]; then
+        NOW=$(date +%s)
+        LAST_CLAIM=0
+        if [ -f "$TRIALS_DB" ]; then
+            LAST_CLAIM=$(grep "^$MAC," "$TRIALS_DB" | tail -n 1 | cut -d',' -f2)
+            [ -z "$LAST_CLAIM" ] && LAST_CLAIM=0
+        fi
+
+        # Check if 24 hours (86400 seconds) have passed
+        DIFF=$((NOW - LAST_CLAIM))
+        if [ "$LAST_CLAIM" -gt 0 ] && [ "$DIFF" -lt 86400 ]; then
+            REMAINING_SECS=$((86400 - DIFF))
+            REM_HRS=$((REMAINING_SECS / 3600))
+            REM_MINS=$(((REMAINING_SECS % 3600) / 60))
+            echo "{\"success\":false,\"message\":\"আপনি আজকের ১০ মিনিটের ফ্রি ট্রায়াল ইতিমধ্যে গ্রহণ করেছেন। পরবর্তী ট্রায়াল পাবেন ${REM_HRS} ঘণ্টা ${REM_MINS} মিনিট পর।\"}"
+            exit 0
+        fi
+
+        # Record new claim
+        grep -v "^$MAC," "$TRIALS_DB" > "$TRIALS_DB.tmp" 2>/dev/null
+        echo "$MAC,$NOW" >> "$TRIALS_DB.tmp"
+        mv "$TRIALS_DB.tmp" "$TRIALS_DB"
+
+        # Grant 10 minutes free trial with 5M down / 2M up
+        if ndsctl json "$MAC" 2>/dev/null | grep -iq "Authenticated"; then
+            ndsctl deauth "$MAC" >/dev/null 2>&1
+            sleep 0.2
+        fi
+        ndsctl auth "$MAC" 10 2048 5120 0 0 "FreeTrial10M" >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"অভিনন্দন! ১০ মিনিটের ফ্রি ট্রায়াল ইন্টারনেট সক্রিয় হয়েছে!\"}"
+        exit 0
+
+    # 3. Redeem Physical Voucher Code
+    elif [ "$ACTION" = "redeem_voucher" ] && [ -n "$VOUCHER_CODE" ] && [ -n "$MAC" ]; then
+        MATCH=$(grep "^$VOUCHER_CODE," "$VOUCHERS_DB" | head -n 1)
+        if [ -z "$MATCH" ]; then
+            echo "{\"success\":false,\"message\":\"ভুল ভাউচার কোড! অনুগ্রহ করে সঠিক কোড দিন।\"}"
+            exit 0
+        fi
+
+        STATUS=$(echo "$MATCH" | cut -d',' -f5)
+        if [ "$STATUS" = "used" ]; then
+            echo "{\"success\":false,\"message\":\"এই ভাউচার কোডটি ইতিমধ্যে ব্যবহার করা হয়েছে!\"}"
+            exit 0
+        fi
+
+        V_MINS=$(echo "$MATCH" | cut -d',' -f2)
+        V_DOWN=$(echo "$MATCH" | cut -d',' -f3)
+        V_UP=$(echo "$MATCH" | cut -d',' -f4)
+        [ -z "$V_MINS" ] && V_MINS=120
+        [ -z "$V_DOWN" ] && V_DOWN=5120
+        [ -z "$V_UP" ] && V_UP=2048
+
+        NOW=$(date +%s)
+        # Mark voucher as used by MAC
+        grep -v "^$VOUCHER_CODE," "$VOUCHERS_DB" > "$VOUCHERS_DB.tmp" 2>/dev/null
+        echo "$VOUCHER_CODE,$V_MINS,$V_DOWN,$V_UP,used,$MAC,$NOW" >> "$VOUCHERS_DB.tmp"
+        mv "$VOUCHERS_DB.tmp" "$VOUCHERS_DB"
+
+        # Authenticate device
+        if ndsctl json "$MAC" 2>/dev/null | grep -iq "Authenticated"; then
+            ndsctl deauth "$MAC" >/dev/null 2>&1
+            sleep 0.2
+        fi
+        ndsctl auth "$MAC" "$V_MINS" "$V_UP" "$V_DOWN" 0 0 "Voucher_${VOUCHER_CODE}" >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"ভাউচার সফল! $V_MINS মিনিটের জন্য ইন্টারনেট চালু হয়েছে।\"}"
+        exit 0
+
+    # 4. Generate Batch Voucher Codes (Admin)
+    elif [ "$ACTION" = "generate_vouchers" ]; then
+        [ -z "$V_COUNT" ] && V_COUNT=5
+        [ "$V_COUNT" -gt 50 ] && V_COUNT=50
+        [ -z "$MINUTES" ] && MINUTES=120
+        [ -z "$DOWN_RATE" ] && DOWN_RATE=5120
+        [ -z "$UP_RATE" ] && UP_RATE=2048
+
+        GENERATED_CODES="["
+        FIRST=1
+        for i in $(seq 1 "$V_COUNT"); do
+            RAND_SUFFIX=$(head -c 4 /dev/urandom | hexdump -e '1/1 "%02X"' | cut -c1-4)
+            CODE="TITAN-${RAND_SUFFIX}"
+            echo "$CODE,$MINUTES,$DOWN_RATE,$UP_RATE,unused,none,0" >> "$VOUCHERS_DB"
+            if [ "$FIRST" -eq 1 ]; then
+                GENERATED_CODES="${GENERATED_CODES}\"${CODE}\""
+                FIRST=0
+            else
+                GENERATED_CODES="${GENERATED_CODES},\"${CODE}\""
+            fi
+        done
+        GENERATED_CODES="${GENERATED_CODES}]"
+
+        echo "{\"success\":true,\"message\":\"$V_COUNT টি নতুন ভাউচার কোড তৈরি হয়েছে\",\"codes\":$GENERATED_CODES}"
+        exit 0
+
+    # 5. Delete or Clear Vouchers
+    elif [ "$ACTION" = "clear_used_vouchers" ]; then
+        grep ",unused," "$VOUCHERS_DB" > "$VOUCHERS_DB.tmp" 2>/dev/null
+        mv "$VOUCHERS_DB.tmp" "$VOUCHERS_DB"
+        echo "{\"success\":true,\"message\":\"ব্যবহৃত ভাউচার তালিকা মুছে ফেলা হয়েছে\"}"
+        exit 0
+
+    # 6. Set Dynamic Bandwidth
     elif [ "$ACTION" = "set_bandwidth" ] && [ -n "$MAC" ]; then
-        # Preserve user's remaining time if possible
         REMAINING=120
         CLI_JSON=$(ndsctl json "$MAC" 2>/dev/null)
         if [ -n "$CLI_JSON" ]; then
@@ -66,11 +179,13 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
         echo "{\"success\":true,\"message\":\"MAC $MAC এর স্পিড লিমিট সেট হয়েছে (Down: ${DOWN_RATE}kbps, Up: ${UP_RATE}kbps, মেয়াদ: ${REMAINING}মি)\"}"
         exit 0
 
+    # 7. User Disconnect / Kick
     elif [ "$ACTION" = "deauth" ] && [ -n "$MAC" ]; then
         ndsctl deauth "$MAC" >/dev/null 2>&1
         echo "{\"success\":true,\"message\":\"MAC $MAC ডিসকানেক্ট / কিক করা হয়েছে\"}"
         exit 0
 
+    # 8. VIP Bypass / Trust
     elif [ "$ACTION" = "trust" ] && [ -n "$MAC" ]; then
         ndsctl trust "$MAC" >/dev/null 2>&1
         echo "{\"success\":true,\"message\":\"MAC $MAC কে ট্রাস্টেড (VIP) করা হয়েছে\"}"
@@ -146,6 +261,13 @@ if [ -n "$ST_LIST" ]; then
 fi
 [ -z "$WIFI_STATIONS" ] && WIFI_STATIONS="[]"
 
+# Vouchers JSON List
+VOUCHERS_JSON="[]"
+if [ -s "$VOUCHERS_DB" ]; then
+    VOUCHERS_JSON=$(awk -F',' 'BEGIN{printf "["} {if (n++) printf ","; printf "{\"code\":\"%s\",\"minutes\":%d,\"down_kbps\":%d,\"up_kbps\":%d,\"status\":\"%s\",\"used_by\":\"%s\",\"created_at\":\"%s\"}", $1, $2, $3, $4, $5, $6, $7} END{printf "]"}' "$VOUCHERS_DB" 2>/dev/null)
+fi
+[ -z "$VOUCHERS_JSON" ] && VOUCHERS_JSON="[]"
+
 # Source local environment secrets if present
 [ -f /etc/titan-hotspot.env ] && . /etc/titan-hotspot.env
 
@@ -165,6 +287,7 @@ cat << EOF
   "dhcp_map": $DHCP_MAP,
   "wifi_stations": $WIFI_STATIONS,
   "nds_clients": $NDS_JSON,
+  "vouchers": $VOUCHERS_JSON,
   "invoices": $INVOICES_JSON
 }
 EOF
