@@ -7,12 +7,12 @@
     {
       "binding": "DB",
       "database_name": "titan-hotspot-db",
-      "database_id": "YOUR_D1_DATABASE_ID_HERE"
+      "database_id": "7821a0db-0c92-4cda-8e30-bf7b1cd1df52"
     }
   ],
   "vars": {
-    "ADMIN_TOKEN": "YOUR_ADMIN_SECRET_TOKEN",
-    "ROUTER_SECRET": "YOUR_ROUTER_SECRET_TOKEN",
-    "SMS_SECRET": "YOUR_SMS_SECRET_TOKEN"
+    "ADMIN_TOKEN": "123456",
+    "ROUTER_SECRET": "titan_secret_2026",
+    "SMS_SECRET": "titan_sms_2026"
   }
 }
