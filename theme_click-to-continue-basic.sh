@@ -169,9 +169,9 @@ generate_splash_sequence() {
       <div style=\"font-size: 11px; color: #94a3b8; margin-top: 8px;\">কাগজের স্ক্র্যাচ কার্ডের পিন কোডটি এখানে লিখুন।</div>
     </div>
 
-    <!-- Section 2: 10-Minute Free Trial -->
+    <!-- Section 2: 3-Minute Free Trial -->
     <button class=\"btn btn-success\" id=\"trialBtn\" onclick=\"claimFreeTrial()\">
-      🎁 ১০ মিনিট ফ্রি ট্রায়াল নিন (Free Trial)
+      🎁 ৩ মিনিট ফ্রি ট্রায়াল নিন (Free Trial)
     </button>
 
     <!-- Section 3: Online Payment via bKash / Nagad -->
@@ -237,7 +237,7 @@ generate_splash_sequence() {
         }
       } catch (e) {
         alert('সংযোগ সমস্যা: ' + e);
-        btn.innerText = '🎁 ১০ মিনিট ফ্রি ট্রায়াল নিন (Free Trial)';
+        btn.innerText = '🎁 ৩ মিনিট ফ্রি ট্রায়াল নিন (Free Trial)';
         btn.disabled = false;
       }
     }

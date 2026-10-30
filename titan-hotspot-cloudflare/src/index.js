@@ -1027,9 +1027,9 @@ function getHotspotPortalHTML(params, packages) {
 
       <button class="btn-buy" id="payBtn" onclick="createCheckout()">⚡ বিকাশ / নগদ দিয়ে পেমেন্ট করুন</button>
 
-      <!-- Quick Actions: 10 Min Free Trial & Physical Voucher Code -->
+      <!-- Quick Actions: 3 Min Free Trial & Physical Voucher Code -->
       <div style="margin-top:16px; padding-top:14px; border-top:1px solid #1e293b; display:flex; flex-direction:column; gap:10px;">
-        <button class="btn-buy" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; font-size:14px; padding:11px;" onclick="claimFreeTrial()">🎁 ১০ মিনিট ফ্রি ট্রায়াল নিন (Free Trial)</button>
+        <button class="btn-buy" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; font-size:14px; padding:11px;" onclick="claimFreeTrial()">🎁 ৩ মিনিট ফ্রি ট্রায়াল নিন (Free Trial)</button>
 
         <div style="background:#0b1120; border:1px solid #1e293b; border-radius:12px; padding:12px;">
           <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">🎫 দোকান থেকে কেনা ভাউচার পিন আছে?</div>

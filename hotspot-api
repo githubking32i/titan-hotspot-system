@@ -64,7 +64,7 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
         echo "{\"success\":true,\"message\":\"MAC $MAC অনুমোদিত ($MINUTES মিনিট, Down: ${DOWN_RATE}k, Up: ${UP_RATE}k)\"}"
         exit 0
 
-    # 2. Free Trial Activation (10 mins once per 24 hours per MAC)
+    # 2. Free Trial Activation (3 mins once per 24 hours per MAC)
     elif [ "$ACTION" = "claim_trial" ] && [ -n "$MAC" ]; then
         NOW=$(date +%s)
         LAST_CLAIM=0
@@ -79,7 +79,7 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
             REMAINING_SECS=$((86400 - DIFF))
             REM_HRS=$((REMAINING_SECS / 3600))
             REM_MINS=$(((REMAINING_SECS % 3600) / 60))
-            echo "{\"success\":false,\"message\":\"আপনি আজকের ১০ মিনিটের ফ্রি ট্রায়াল ইতিমধ্যে গ্রহণ করেছেন। পরবর্তী ট্রায়াল পাবেন ${REM_HRS} ঘণ্টা ${REM_MINS} মিনিট পর।\"}"
+            echo "{\"success\":false,\"message\":\"আপনি আজকের ৩ মিনিটের ফ্রি ট্রায়াল ইতিমধ্যে গ্রহণ করেছেন। পরবর্তী ট্রায়াল পাবেন ${REM_HRS} ঘণ্টা ${REM_MINS} মিনিট পর।\"}"
             exit 0
         fi
 
@@ -88,12 +88,12 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
         echo "$MAC,$NOW" >> "$TRIALS_DB.tmp"
         mv "$TRIALS_DB.tmp" "$TRIALS_DB"
 
-        # Grant 10 minutes free trial with 5M down / 2M up
+        # Grant 3 minutes free trial with 5M down / 2M up
         if ndsctl json "$MAC" 2>/dev/null | grep -iq "Authenticated"; then
             ndsctl deauth "$MAC" >/dev/null 2>&1
         fi
-        ndsctl auth "$MAC" 10 2048 5120 0 0 "FreeTrial10M" >/dev/null 2>&1
-        echo "{\"success\":true,\"message\":\"অভিনন্দন! ১০ মিনিটের ফ্রি ট্রায়াল ইন্টারনেট সক্রিয় হয়েছে!\"}"
+        ndsctl auth "$MAC" 3 2048 5120 0 0 "FreeTrial3M" >/dev/null 2>&1
+        echo "{\"success\":true,\"message\":\"অভিনন্দন! ৩ মিনিটের ফ্রি ট্রায়াল ইন্টারনেট সক্রিয় হয়েছে!\"}"
         exit 0
 
     # 3. Redeem Physical Voucher Code
