@@ -240,10 +240,18 @@ GLOBAL_DOWN=$(uci -q get opennds.@opennds[0].download_rate_limit_threshold || ec
 GLOBAL_UP=$(uci -q get opennds.@opennds[0].upload_rate_limit_threshold || echo "0")
 [ -z "$GLOBAL_UP" ] && GLOBAL_UP="0"
 
-# Query OpenNDS JSON with quick retry
+# Query OpenNDS JSON with quick retry and sanitize multiline custom strings
 NDS_JSON="{}"
 for i in 1 2 3; do
-    TRY_JSON=$(ndsctl json 2>/dev/null)
+    TRY_JSON=$(ndsctl json 2>/dev/null | awk '{
+        if ($0 ~ /"custom":/ && $0 !~ /",/) {
+            getline n;
+            sub(/^[ \t]*/, "", n);
+            print $0 n;
+        } else {
+            print $0;
+        }
+    }')
     case "$TRY_JSON" in
         "{"*)
             NDS_JSON="$TRY_JSON"
