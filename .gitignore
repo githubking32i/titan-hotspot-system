@@ -7,3 +7,11 @@ local.properties
 .wrangler/
 *.png
 !app_logo.png
+
+# Other standalone tools / build outputs
+TitanDownloader/
+Install_TitanDM.bat
+TitanDownloader.spec
+dist/
+embed.html
+ldm.ico
