@@ -18,6 +18,8 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder
     public interface OnClientActionListener {
         void onAuth(String mac, int minutes);
         void onKick(String mac);
+        void onSpeed(String mac);
+        void onRename(String mac, String currentName);
     }
 
     private List<Models.ClientInfo> list = new ArrayList<>();
@@ -64,8 +66,12 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder
             if (listener != null) listener.onAuth(item.mac, 120);
         });
 
-        h.btnAuth1d.setOnClickListener(v -> {
-            if (listener != null) listener.onAuth(item.mac, 1440);
+        h.btnSpeed.setOnClickListener(v -> {
+            if (listener != null) listener.onSpeed(item.mac);
+        });
+
+        h.btnRename.setOnClickListener(v -> {
+            if (listener != null) listener.onRename(item.mac, item.name);
         });
 
         h.btnKick.setOnClickListener(v -> {
@@ -80,7 +86,7 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvDeviceName, tvMac, tvIp, tvStatusBadge, tvTraffic;
-        MaterialButton btnAuth2h, btnAuth1d, btnKick;
+        MaterialButton btnAuth2h, btnKick, btnSpeed, btnRename;
 
         public ViewHolder(@NonNull View v) {
             super(v);
@@ -90,8 +96,9 @@ public class ClientAdapter extends RecyclerView.Adapter<ClientAdapter.ViewHolder
             tvStatusBadge = v.findViewById(R.id.tvStatusBadge);
             tvTraffic = v.findViewById(R.id.tvTraffic);
             btnAuth2h = v.findViewById(R.id.btnAuth2h);
-            btnAuth1d = v.findViewById(R.id.btnAuth1d);
             btnKick = v.findViewById(R.id.btnKick);
+            btnSpeed = v.findViewById(R.id.btnSpeed);
+            btnRename = v.findViewById(R.id.btnRename);
         }
     }
 }

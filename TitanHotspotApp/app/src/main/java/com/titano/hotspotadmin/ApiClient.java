@@ -200,6 +200,10 @@ public class ApiClient {
     }
 
     public static void sendCommand(String token, String action, String mac, int minutes, int downRate, int upRate, ApiCallback<String> callback) {
+        sendCommandWithExtras(token, action, mac, minutes, downRate, upRate, null, callback);
+    }
+
+    public static void sendCommandWithExtras(String token, String action, String mac, int minutes, int downRate, int upRate, String name, ApiCallback<String> callback) {
         try {
             boolean isLocal = baseUrl.contains("192.168.") || baseUrl.contains(".local");
             String targetUrl = isLocal ? (baseUrl + "/cgi-bin/hotspot-api") : (baseUrl + "/api/admin/command");
@@ -210,6 +214,9 @@ public class ApiClient {
             body.put("minutes", minutes);
             body.put("download_rate", downRate);
             body.put("upload_rate", upRate);
+            if (name != null && !name.isEmpty()) {
+                body.put("name", name.trim());
+            }
 
             Request.Builder reqBuilder = new Request.Builder()
                     .url(targetUrl)

@@ -109,8 +109,10 @@ while true; do
                 ACT=$(echo "$CMD" | jsonfilter -e '@.action')
                 RAW_CMAC=$(echo "$CMD" | jsonfilter -e '@.mac')
                 CMIN=$(echo "$CMD" | jsonfilter -e '@.minutes')
-                CDOWN=$(echo "$CMD" | jsonfilter -e '@.download_rate' 2>/dev/null)
-                CUP=$(echo "$CMD" | jsonfilter -e '@.upload_rate' 2>/dev/null)
+                CDOWN=$(echo "$CMD" | jsonfilter -e '@.down_rate' 2>/dev/null)
+                [ -z "$CDOWN" ] && CDOWN=$(echo "$CMD" | jsonfilter -e '@.download_rate' 2>/dev/null)
+                CUP=$(echo "$CMD" | jsonfilter -e '@.up_rate' 2>/dev/null)
+                [ -z "$CUP" ] && CUP=$(echo "$CMD" | jsonfilter -e '@.upload_rate' 2>/dev/null)
                 CMAC=$(echo "$RAW_CMAC" | tr 'A-Z' 'a-z' | tr '-' ':' | tr -d ' \t\r\n')
 
                 [ -z "$CDOWN" ] && CDOWN=0
@@ -137,6 +139,15 @@ while true; do
                     fi
                     ndsctl deauth "$CMAC" >/dev/null 2>&1
                     ndsctl auth "$CMAC" "$REMAINING" "$CUP" "$CDOWN" 0 0 "RateLimit_${CDOWN}k" >/dev/null 2>&1
+                elif [ "$ACT" = "generate_vouchers" ]; then
+                    [ -z "$CMIN" ] && CMIN=120
+                    [ "$CDOWN" -eq 0 ] && CDOWN=5120
+                    [ "$CUP" -eq 0 ] && CUP=2048
+                    RAND_SUFFIX=$(head -c 4 /dev/urandom | hexdump -e '1/1 "%02X"' | cut -c1-4)
+                    CODE="TITAN-${RAND_SUFFIX}"
+                    mkdir -p /etc/titan-hotspot
+                    echo "$CODE,$CMIN,$CDOWN,$CUP,unused,none,0" >> /etc/titan-hotspot/vouchers.db
+                    logger -t "$LOG_TAG" "Generated remote voucher $CODE ($CMIN mins)"
                 elif [ "$ACT" = "deauth" ] && [ -n "$CMAC" ]; then
                     ndsctl deauth "$CMAC" >/dev/null 2>&1
                 elif [ "$ACT" = "trust" ] && [ -n "$CMAC" ]; then
@@ -184,7 +195,7 @@ while true; do
 
         UPTIME=$(uptime | awk -F',  ' '{print $1}' | awk '{print $3,$4}' | sed 's/[^a-zA-Z0-9: ]//g')
         LOAD=$(uptime | awk -F'load average:' '{print $2}' | sed 's/^[ \t]*//' | sed 's/[^0-9., ]//g')
-        NDS_JSON=$(ndsctl json 2>/dev/null)
+        NDS_JSON=$(ndsctl json 2>/dev/null | awk '{if ($0 ~ /"custom":/ && $0 !~ /",/) { getline n; sub(/^[ \t]*/, "", n); print $0 n } else { print $0 }}')
         [ -z "$NDS_JSON" ] && NDS_JSON="{}"
 
         HB_BODY="{\"connected_clients\":$CLIENTS_JSON,\"interval_seconds\":$HEARTBEAT_INTERVAL,\"uptime\":\"$UPTIME\",\"load\":\"$LOAD\",\"nds_clients\":$NDS_JSON}"

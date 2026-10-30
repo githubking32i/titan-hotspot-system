@@ -11,8 +11,8 @@
     }
   ],
   "vars": {
-    "ADMIN_TOKEN": "123456",
-    "ROUTER_SECRET": "titan_secret_2026",
+    "ADMIN_TOKEN": "titan_admin_secret_2026",
+    "ROUTER_SECRET": "titan_router_secret_2026",
     "SMS_SECRET": "titan_sms_2026"
   }
 }

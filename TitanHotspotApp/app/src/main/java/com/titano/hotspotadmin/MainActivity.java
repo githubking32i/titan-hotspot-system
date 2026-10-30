@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private String adminToken = "";
     private TextView tvRouterStatus, tvStatActive, tvStatRevenue, tvStatVouchers, tvEmpty;
     private MaterialButton btnTabClients, btnTabInvoices, btnTabWebAdmin;
+    private MaterialButton btnQuickVoucher, btnQuickVip, btnQuickSpeed, btnQuickService;
     private SwipeRefreshLayout swipeRefresh;
     private RecyclerView rvList;
     private ExtendedFloatingActionButton fabQuickAuth;
@@ -96,6 +97,11 @@ public class MainActivity extends AppCompatActivity {
         btnTabClients = findViewById(R.id.btnTabClients);
         btnTabInvoices = findViewById(R.id.btnTabInvoices);
         btnTabWebAdmin = findViewById(R.id.btnTabWebAdmin);
+
+        btnQuickVoucher = findViewById(R.id.btnQuickVoucher);
+        btnQuickVip = findViewById(R.id.btnQuickVip);
+        btnQuickSpeed = findViewById(R.id.btnQuickSpeed);
+        btnQuickService = findViewById(R.id.btnQuickService);
 
         swipeRefresh = findViewById(R.id.swipeRefresh);
         rvList = findViewById(R.id.rvList);
@@ -171,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         btnWebCloud.setBackgroundColor(0xFF1E293B);
         btnWebCloud.setTextColor(0xFFF8FAFC);
 
-        String routerUrl = "http://192.168.1.1/hotspot.html";
+        String routerUrl = "http://192.168.50.1:2080/hotspot.html";
         if (ApiClient.baseUrl.contains("192.168.") || ApiClient.baseUrl.contains(".local")) {
             routerUrl = ApiClient.baseUrl + "/hotspot.html";
         }
@@ -207,6 +213,16 @@ public class MainActivity extends AppCompatActivity {
                         .setNegativeButton("বাতিল", null)
                         .show();
             }
+
+            @Override
+            public void onSpeed(String mac) {
+                showSpeedDialog(mac);
+            }
+
+            @Override
+            public void onRename(String mac, String currentName) {
+                showRenameDialog(mac, currentName);
+            }
         });
 
         invoiceAdapter = new InvoiceAdapter(mac -> showQuickAuthDialog(mac));
@@ -214,6 +230,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
+        btnQuickVoucher.setOnClickListener(v -> showVoucherDialog());
+        btnQuickVip.setOnClickListener(v -> showVipDialog());
+        btnQuickSpeed.setOnClickListener(v -> showSpeedDialog(""));
+        btnQuickService.setOnClickListener(v -> showServiceDialog());
+
         btnTabClients.setOnClickListener(v -> {
             isWebTab = false;
             isClientsTab = true;
@@ -263,11 +284,7 @@ public class MainActivity extends AppCompatActivity {
             layoutWebAdmin.setVisibility(View.VISIBLE);
 
             if (webViewAdmin.getUrl() == null || webViewAdmin.getUrl().isEmpty()) {
-                if (ApiClient.baseUrl.contains("192.168.") || ApiClient.baseUrl.contains(".local")) {
-                    loadRouterWeb();
-                } else {
-                    loadCloudWeb();
-                }
+                loadRouterWeb();
             }
         });
 
@@ -369,6 +386,145 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "ব্যর্থ: " + error, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void showVoucherDialog() {
+        String[] packages = {"২ ঘণ্টা (৳১০)", "১ দিন (৳২৫)", "৭ দিন (৳৫০)", "৩০ দিন (৳১৫০)", "৩ মিনিটের ট্রায়াল"};
+        int[] minutes = {120, 1440, 10080, 43200, 3};
+        final int[] selectedIndex = {0};
+
+        new AlertDialog.Builder(this)
+                .setTitle("🎫 নতুন ভাউচার তৈরি করুন")
+                .setSingleChoiceItems(packages, 0, (d, which) -> selectedIndex[0] = which)
+                .setPositiveButton("জেনারেট করুন", (d, which) -> {
+                    int chosenMins = minutes[selectedIndex[0]];
+                    Toast.makeText(this, "ভাউচার তৈরি করা হচ্ছে...", Toast.LENGTH_SHORT).show();
+                    ApiClient.sendCommand(adminToken, "generate_vouchers", "", chosenMins, 5120, 2048, new ApiClient.ApiCallback<String>() {
+                        @Override
+                        public void onSuccess(String result) {
+                            new AlertDialog.Builder(MainActivity.this)
+                                    .setTitle("ভাউচার সফল!")
+                                    .setMessage(result + "\n\nগ্রাহক ভাউচার কোড দিয়ে হটস্পটে লগইন করতে পারবে।")
+                                    .setPositiveButton("ঠিক আছে", null)
+                                    .show();
+                            loadData();
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            Toast.makeText(MainActivity.this, "ব্যর্থ: " + error, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                })
+                .setNegativeButton("বাতিল", null)
+                .show();
+    }
+
+    private void showSpeedDialog(String defaultMac) {
+        android.widget.EditText etMacInput = new android.widget.EditText(this);
+        etMacInput.setHint("ডিভাইস MAC এড্রেস");
+        etMacInput.setText(defaultMac != null ? defaultMac : "");
+        etMacInput.setTextColor(0xFFF8FAFC);
+        etMacInput.setHintTextColor(0xFF64748B);
+        etMacInput.setPadding(40, 30, 40, 30);
+
+        String[] speedOptions = {"🚀 নো লিমিট (ফুল স্পিড)", "⚡ 10 Mbps (Fast)", "⚡ 5 Mbps (Standard)", "⚡ 2 Mbps (Basic)", "⚡ 1 Mbps (Saver)"};
+        int[] downRates = {0, 10240, 5120, 2048, 1024};
+        int[] upRates = {0, 5120, 2048, 1024, 512};
+        final int[] selectedSpeed = {2};
+
+        android.widget.LinearLayout container = new android.widget.LinearLayout(this);
+        container.setOrientation(android.widget.LinearLayout.VERTICAL);
+        container.setPadding(40, 10, 40, 10);
+        container.addView(etMacInput);
+
+        new AlertDialog.Builder(this)
+                .setTitle("⚡ স্পিড লিমিট নির্ধারণ করুন")
+                .setView(container)
+                .setSingleChoiceItems(speedOptions, 2, (dialog, which) -> selectedSpeed[0] = which)
+                .setPositiveButton("স্পিড সেট করুন", (dialog, which) -> {
+                    String mac = etMacInput.getText().toString().trim();
+                    if (mac.isEmpty()) {
+                        Toast.makeText(this, "সঠিক MAC এড্রেস দিন", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    int down = downRates[selectedSpeed[0]];
+                    int up = upRates[selectedSpeed[0]];
+                    sendRemoteCommand("set_bandwidth", mac, 0, down, up);
+                })
+                .setNegativeButton("বাতিল", null)
+                .show();
+    }
+
+    private void showVipDialog() {
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setHint("e.g. fe:0a:e4:5a:a5:45");
+        input.setTextColor(0xFFF8FAFC);
+        input.setHintTextColor(0xFF64748B);
+        input.setPadding(40, 30, 40, 30);
+
+        new AlertDialog.Builder(this)
+                .setTitle("⭐ ভিআইপি এক্সেস দিন")
+                .setMessage("কোনো ভাউচার বা লগইন ছাড়া ১ মাস ফুল স্পিড ইন্টারনেট সক্রিয় থাকবে।")
+                .setView(input)
+                .setPositiveButton("ভিআইপি করুন", (d, w) -> {
+                    String mac = input.getText().toString().trim();
+                    if (!mac.isEmpty()) {
+                        sendRemoteCommand("auth", mac, 43200);
+                    }
+                })
+                .setNegativeButton("বাতিল", null)
+                .show();
+    }
+
+    private void showServiceDialog() {
+        String[] services = {"🔄 OpenNDS পোর্টাল রিস্টার্ট", "🧹 পুরাতন ভাউচার ডাটাবেজ ক্লিন", "⚙️ হটস্পট ব্যাকএন্ড রিস্টার্ট"};
+        new AlertDialog.Builder(this)
+                .setTitle("🛠️ রাউটার সার্ভিস ও ডেমন কন্ট্রোল")
+                .setItems(services, (dialog, which) -> {
+                    if (which == 0) {
+                        sendRemoteCommand("restart_nds", "", 0);
+                    } else if (which == 1) {
+                        sendRemoteCommand("clear_used_vouchers", "", 0);
+                    } else if (which == 2) {
+                        sendRemoteCommand("restart_daemon", "", 0);
+                    }
+                })
+                .setNegativeButton("বাতিল", null)
+                .show();
+    }
+
+    private void showRenameDialog(String mac, String currentName) {
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setText(currentName != null ? currentName : "");
+        input.setHint("ডিভাইসের নাম (যেমন: রহিমের ফোন)");
+        input.setTextColor(0xFFF8FAFC);
+        input.setHintTextColor(0xFF64748B);
+        input.setPadding(40, 30, 40, 30);
+
+        new AlertDialog.Builder(this)
+                .setTitle("✏️ ডিভাইসের নাম পরিবর্তন")
+                .setMessage("MAC: " + mac)
+                .setView(input)
+                .setPositiveButton("সংরক্ষণ", (d, w) -> {
+                    String newName = input.getText().toString().trim();
+                    if (!newName.isEmpty()) {
+                        ApiClient.sendCommandWithExtras(adminToken, "set_device_name", mac, 0, 0, 0, newName, new ApiClient.ApiCallback<String>() {
+                            @Override
+                            public void onSuccess(String result) {
+                                Toast.makeText(MainActivity.this, result, Toast.LENGTH_SHORT).show();
+                                loadData();
+                            }
+
+                            @Override
+                            public void onError(String error) {
+                                Toast.makeText(MainActivity.this, "ব্যর্থ: " + error, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                })
+                .setNegativeButton("বাতিল", null)
+                .show();
     }
 
     private void showQuickAuthDialog(String defaultMac) {

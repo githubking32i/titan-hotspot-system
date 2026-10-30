@@ -88,27 +88,40 @@
             android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRename"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="6dp"
+                android:backgroundTint="#1E293B"
+                android:paddingHorizontal="10dp"
+                android:text="✏️ নাম"
+                android:textColor="@color/text_main"
+                android:textSize="11sp"
+                app:cornerRadius="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSpeed"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="6dp"
+                android:backgroundTint="#2A2010"
+                android:paddingHorizontal="10dp"
+                android:text="⚡ স্পিড"
+                android:textColor="#F59E0B"
+                android:textSize="11sp"
+                app:cornerRadius="8dp" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAuth2h"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:layout_marginEnd="6dp"
                 android:backgroundTint="#1E293B"
-                android:paddingHorizontal="12dp"
-                android:text="+২ ঘণ্টা"
-                android:textColor="@color/text_main"
-                android:textSize="11sp"
-                app:cornerRadius="8dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAuth1d"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginEnd="6dp"
-                android:backgroundTint="#1E293B"
-                android:paddingHorizontal="12dp"
-                android:text="+১ দিন"
+                android:paddingHorizontal="10dp"
+                android:text="+২ঘণ্টা"
                 android:textColor="@color/text_main"
                 android:textSize="11sp"
                 app:cornerRadius="8dp" />
@@ -119,7 +132,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:backgroundTint="#3A1717"
-                android:paddingHorizontal="12dp"
+                android:paddingHorizontal="10dp"
                 android:text="কিক"
                 android:textColor="@color/danger"
                 android:textSize="11sp"
