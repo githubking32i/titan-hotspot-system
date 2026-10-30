@@ -131,6 +131,41 @@ public class ApiClient {
                         }
                     }
 
+                    if (json.has("wifi_stations")) {
+                        JSONArray stList = json.optJSONArray("wifi_stations");
+                        if (stList != null) {
+                            for (int i = 0; i < stList.length(); i++) {
+                                JSONObject st = stList.optJSONObject(i);
+                                if (st != null) {
+                                    String smac = st.optString("mac", "").toLowerCase();
+                                    boolean alreadyExists = false;
+                                    for (Models.ClientInfo existing : res.clients) {
+                                        if (existing.mac.equalsIgnoreCase(smac)) {
+                                            alreadyExists = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!alreadyExists && !smac.isEmpty()) {
+                                        Models.ClientInfo ci = new Models.ClientInfo();
+                                        ci.mac = smac;
+                                        ci.state = "Preauthenticated";
+                                        if (dhcpMap != null) {
+                                            JSONObject dInfo = dhcpMap.optJSONObject(smac);
+                                            if (dInfo != null) {
+                                                ci.ip = dInfo.optString("ip", "");
+                                                ci.name = dInfo.optString("hostname", "");
+                                            }
+                                        }
+                                        if (ci.name == null || ci.name.isEmpty()) {
+                                            ci.name = "নতুন সংযোগ (Wi-Fi)";
+                                        }
+                                        res.clients.add(ci);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (json.has("invoices")) {
                         JSONArray invs = json.optJSONArray("invoices");
                         if (invs != null) {
