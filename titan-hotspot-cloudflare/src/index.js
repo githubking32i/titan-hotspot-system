@@ -977,6 +977,12 @@ function getHotspotPortalHTML(params, packages) {
 </head>
 <body>
   <div class="card">
+    <!-- Promotional Hero Banner Ad -->
+    <div style="margin:-24px -24px 18px -24px; border-radius:20px 20px 0 0; overflow:hidden; position:relative; background:#0b1329;">
+      <img src="http://192.168.50.1/titan_hotspot_ad_banner.jpg" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/githubking32i/titan-hotspot-system/main/titan_hotspot_ad_banner.jpg';" alt="TITAN HOTSPOT Ads" style="width:100%; height:auto; display:block; aspect-ratio:16/9; object-fit:cover; border-bottom:1px solid #1e293b;">
+      <div style="position:absolute; top:10px; right:10px; background:rgba(2,132,199,0.85); backdrop-filter:blur(6px); color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:12px; letter-spacing:0.5px;">⚡ Wi-Fi 6 GIGA-SPEED</div>
+    </div>
+
     <div class="header">
       <div class="logo">WIFI HOTSPOT</div>
       <span class="badge">JOIN TO PURCHASE</span>
@@ -1744,6 +1750,12 @@ function getStatusHTML(params) {
 </head>
 <body>
   <div class="card">
+    <!-- Promotional Hero Banner Ad -->
+    <div style="margin:-24px -24px 18px -24px; border-radius:20px 20px 0 0; overflow:hidden; position:relative; background:#0b1329;">
+      <img src="http://192.168.50.1/titan_hotspot_ad_banner.jpg" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/githubking32i/titan-hotspot-system/main/titan_hotspot_ad_banner.jpg';" alt="TITAN HOTSPOT Ads" style="width:100%; height:auto; display:block; aspect-ratio:16/9; object-fit:cover; border-bottom:1px solid #1e293b;">
+      <div style="position:absolute; top:10px; right:10px; background:rgba(2,132,199,0.85); backdrop-filter:blur(6px); color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:12px; letter-spacing:0.5px;">⚡ Wi-Fi 6 GIGA-SPEED</div>
+    </div>
+
     <div class="header">
       <div class="logo">TITAN HOTSPOT</div>
       <div class="sub">প্যাকেজ স্ট্যাটাস ও অবশিষ্ট সময়</div>
