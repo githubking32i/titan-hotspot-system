@@ -209,5 +209,10 @@ while true; do
         fi
     fi
 
+    # Auto-delete any used vouchers so database stays clean and uncluttered
+    if [ -f /etc/titan-hotspot/vouchers.db ] && grep -q ",used," /etc/titan-hotspot/vouchers.db 2>/dev/null; then
+        grep ",unused," /etc/titan-hotspot/vouchers.db > /etc/titan-hotspot/vouchers.db.tmp 2>/dev/null && mv /etc/titan-hotspot/vouchers.db.tmp /etc/titan-hotspot/vouchers.db
+    fi
+
     sleep 5
 done

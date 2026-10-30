@@ -97,13 +97,16 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
     elif [ "$ACTION" = "redeem_voucher" ] && [ -n "$VOUCHER_CODE" ] && [ -n "$MAC" ]; then
         MATCH=$(grep "^$VOUCHER_CODE," "$VOUCHERS_DB" | head -n 1)
         if [ -z "$MATCH" ]; then
-            echo "{\"success\":false,\"message\":\"ভুল ভাউচার কোড! অনুগ্রহ করে সঠিক কোড দিন।\"}"
+            echo "{\"success\":false,\"message\":\"ভুল অথবা ইতিমধ্যে ব্যবহৃত ভাউচার কোড!\"}"
             exit 0
         fi
 
         STATUS=$(echo "$MATCH" | cut -d',' -f5)
         if [ "$STATUS" = "used" ]; then
-            echo "{\"success\":false,\"message\":\"এই ভাউচার কোডটি ইতিমধ্যে ব্যবহার করা হয়েছে!\"}"
+            # Automatically delete stale used voucher
+            grep -v "^$VOUCHER_CODE," "$VOUCHERS_DB" > "$VOUCHERS_DB.tmp" 2>/dev/null
+            mv "$VOUCHERS_DB.tmp" "$VOUCHERS_DB"
+            echo "{\"success\":false,\"message\":\"এই ভাউচার কোডটি ইতিমধ্যে ব্যবহার করা হয়েছে এবং ডিলিট করা হয়েছে!\"}"
             exit 0
         fi
 
@@ -114,10 +117,8 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
         [ -z "$V_DOWN" ] && V_DOWN=5120
         [ -z "$V_UP" ] && V_UP=2048
 
-        NOW=$(date +%s)
-        # Mark voucher as used by MAC
+        # Automatically DELETE used voucher from database immediately upon redemption
         grep -v "^$VOUCHER_CODE," "$VOUCHERS_DB" > "$VOUCHERS_DB.tmp" 2>/dev/null
-        echo "$VOUCHER_CODE,$V_MINS,$V_DOWN,$V_UP,used,$MAC,$NOW" >> "$VOUCHERS_DB.tmp"
         mv "$VOUCHERS_DB.tmp" "$VOUCHERS_DB"
 
         # Authenticate device
@@ -125,7 +126,7 @@ if [ "$REQUEST_METHOD" = "POST" ]; then
             ndsctl deauth "$MAC" >/dev/null 2>&1
         fi
         ndsctl auth "$MAC" "$V_MINS" "$V_UP" "$V_DOWN" 0 0 "Voucher_${VOUCHER_CODE}" >/dev/null 2>&1
-        echo "{\"success\":true,\"message\":\"ভাউচার সফল! $V_MINS মিনিটের জন্য ইন্টারনেট চালু হয়েছে।\"}"
+        echo "{\"success\":true,\"message\":\"ভাউচার সফল! $V_MINS মিনিটের জন্য ইন্টারনেট চালু হয়েছে। (ব্যবহৃত ভাউচার অটো ডিলিট সম্পন্ন)\"}"
         exit 0
 
     # 4. Generate Batch Voucher Codes (Admin)
@@ -307,6 +308,10 @@ fi
 # Vouchers JSON List
 VOUCHERS_JSON="[]"
 if [ -s "$VOUCHERS_DB" ]; then
+    # Auto-prune any used vouchers so table only holds active, fresh vouchers
+    if grep -q ",used," "$VOUCHERS_DB" 2>/dev/null; then
+        grep ",unused," "$VOUCHERS_DB" > "$VOUCHERS_DB.tmp" 2>/dev/null && mv "$VOUCHERS_DB.tmp" "$VOUCHERS_DB"
+    fi
     VOUCHERS_JSON=$(awk -F',' 'BEGIN{printf "["} {if (n++) printf ","; printf "{\"code\":\"%s\",\"minutes\":%d,\"down_kbps\":%d,\"up_kbps\":%d,\"status\":\"%s\",\"used_by\":\"%s\",\"created_at\":\"%s\"}", $1, $2, $3, $4, $5, $6, $7} END{printf "]"}' "$VOUCHERS_DB" 2>/dev/null)
 fi
 [ -z "$VOUCHERS_JSON" ] && VOUCHERS_JSON="[]"
