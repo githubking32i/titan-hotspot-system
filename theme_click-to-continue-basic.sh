@@ -196,7 +196,7 @@ generate_splash_sequence() {
       btn.disabled = true;
 
       try {
-        const res = await fetch('/cgi-bin/hotspot-api', {
+        const res = await fetch('http://192.168.50.1:2080/cgi-bin/hotspot-api', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'redeem_voucher', mac: '${clientmac}', voucher_code: code })
@@ -222,7 +222,7 @@ generate_splash_sequence() {
       btn.disabled = true;
 
       try {
-        const res = await fetch('/cgi-bin/hotspot-api', {
+        const res = await fetch('http://192.168.50.1:2080/cgi-bin/hotspot-api', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'claim_trial', mac: '${clientmac}' })

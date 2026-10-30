@@ -1171,7 +1171,7 @@ function getHotspotPortalHTML(params, packages) {
         return;
       }
       try {
-        const res = await fetch('http://192.168.50.1/cgi-bin/hotspot-api', {
+        const res = await fetch('http://192.168.50.1:2080/cgi-bin/hotspot-api', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'claim_trial', mac: clientmac })
@@ -1197,7 +1197,7 @@ function getHotspotPortalHTML(params, packages) {
         return;
       }
       try {
-        const res = await fetch('http://192.168.50.1/cgi-bin/hotspot-api', {
+        const res = await fetch('http://192.168.50.1:2080/cgi-bin/hotspot-api', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'redeem_voucher', mac: clientmac, voucher_code: code })
