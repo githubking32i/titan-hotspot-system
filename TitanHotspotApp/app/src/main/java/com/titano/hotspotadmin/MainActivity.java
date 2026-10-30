@@ -2,12 +2,19 @@ package com.titano.hotspotadmin;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,11 +34,20 @@ public class MainActivity extends AppCompatActivity {
 
     private String adminToken = "";
     private TextView tvRouterStatus, tvStatActive, tvStatRevenue, tvStatVouchers, tvEmpty;
-    private MaterialButton btnTabClients, btnTabInvoices;
+    private MaterialButton btnTabClients, btnTabInvoices, btnTabWebAdmin;
     private SwipeRefreshLayout swipeRefresh;
     private RecyclerView rvList;
     private ExtendedFloatingActionButton fabQuickAuth;
     private ImageButton btnRefresh, btnLogout;
+
+    // Full Web Admin elements
+    private View layoutWebAdmin;
+    private WebView webViewAdmin;
+    private ProgressBar pbWebLoading;
+    private TextView tvWebUrl;
+    private MaterialButton btnWebRouter, btnWebCloud;
+    private ImageButton btnWebReload;
+    private boolean isWebTab = false;
 
     private ClientAdapter clientAdapter;
     private InvoiceAdapter invoiceAdapter;
@@ -63,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
         initViews();
         setupAdapters();
+        setupWebView();
         setupListeners();
 
         loadData();
@@ -78,13 +95,100 @@ public class MainActivity extends AppCompatActivity {
 
         btnTabClients = findViewById(R.id.btnTabClients);
         btnTabInvoices = findViewById(R.id.btnTabInvoices);
+        btnTabWebAdmin = findViewById(R.id.btnTabWebAdmin);
+
         swipeRefresh = findViewById(R.id.swipeRefresh);
         rvList = findViewById(R.id.rvList);
         fabQuickAuth = findViewById(R.id.fabQuickAuth);
         btnRefresh = findViewById(R.id.btnRefresh);
         btnLogout = findViewById(R.id.btnLogout);
 
+        layoutWebAdmin = findViewById(R.id.layoutWebAdmin);
+        webViewAdmin = findViewById(R.id.webViewAdmin);
+        pbWebLoading = findViewById(R.id.pbWebLoading);
+        tvWebUrl = findViewById(R.id.tvWebUrl);
+        btnWebRouter = findViewById(R.id.btnWebRouter);
+        btnWebCloud = findViewById(R.id.btnWebCloud);
+        btnWebReload = findViewById(R.id.btnWebReload);
+
         rvList.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void setupWebView() {
+        WebSettings ws = webViewAdmin.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setDatabaseEnabled(true);
+        ws.setLoadWithOverviewMode(true);
+        ws.setUseWideViewPort(true);
+        ws.setBuiltInZoomControls(true);
+        ws.setDisplayZoomControls(false);
+        ws.setAllowFileAccess(true);
+        ws.setAllowContentAccess(true);
+        ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+        webViewAdmin.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return false;
+            }
+
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                pbWebLoading.setVisibility(View.VISIBLE);
+                if (url != null) {
+                    tvWebUrl.setText(url.replace("http://", "").replace("https://", ""));
+                }
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                pbWebLoading.setVisibility(View.GONE);
+                if (url != null) {
+                    tvWebUrl.setText(url.replace("http://", "").replace("https://", ""));
+                }
+            }
+        });
+
+        webViewAdmin.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                pbWebLoading.setProgress(newProgress);
+                if (newProgress >= 100) {
+                    pbWebLoading.setVisibility(View.GONE);
+                }
+            }
+        });
+
+        btnWebRouter.setOnClickListener(v -> loadRouterWeb());
+        btnWebCloud.setOnClickListener(v -> loadCloudWeb());
+        btnWebReload.setOnClickListener(v -> webViewAdmin.reload());
+    }
+
+    private void loadRouterWeb() {
+        btnWebRouter.setBackgroundColor(0xFF38BDF8);
+        btnWebRouter.setTextColor(0xFF090D16);
+        btnWebCloud.setBackgroundColor(0xFF1E293B);
+        btnWebCloud.setTextColor(0xFFF8FAFC);
+
+        String routerUrl = "http://192.168.1.1/hotspot.html";
+        if (ApiClient.baseUrl.contains("192.168.") || ApiClient.baseUrl.contains(".local")) {
+            routerUrl = ApiClient.baseUrl + "/hotspot.html";
+        }
+        webViewAdmin.loadUrl(routerUrl);
+    }
+
+    private void loadCloudWeb() {
+        btnWebCloud.setBackgroundColor(0xFF38BDF8);
+        btnWebCloud.setTextColor(0xFF090D16);
+        btnWebRouter.setBackgroundColor(0xFF1E293B);
+        btnWebRouter.setTextColor(0xFFF8FAFC);
+
+        String cloudUrl = "https://titan-hotspot.titano.workers.dev/admin";
+        if (!ApiClient.baseUrl.contains("192.168.") && !ApiClient.baseUrl.contains(".local")) {
+            cloudUrl = ApiClient.baseUrl + "/admin";
+        }
+        webViewAdmin.loadUrl(cloudUrl);
     }
 
     private void setupAdapters() {
@@ -111,27 +215,70 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupListeners() {
         btnTabClients.setOnClickListener(v -> {
+            isWebTab = false;
             isClientsTab = true;
             btnTabClients.setBackgroundColor(0xFF38BDF8);
             btnTabClients.setTextColor(0xFF090D16);
             btnTabInvoices.setBackgroundColor(0xFF1E293B);
             btnTabInvoices.setTextColor(0xFFF8FAFC);
+            btnTabWebAdmin.setBackgroundColor(0xFF1E293B);
+            btnTabWebAdmin.setTextColor(0xFFF8FAFC);
+
+            layoutWebAdmin.setVisibility(View.GONE);
+            swipeRefresh.setVisibility(View.VISIBLE);
+            fabQuickAuth.setVisibility(View.VISIBLE);
             rvList.setAdapter(clientAdapter);
             updateEmptyView();
         });
 
         btnTabInvoices.setOnClickListener(v -> {
+            isWebTab = false;
             isClientsTab = false;
             btnTabInvoices.setBackgroundColor(0xFF38BDF8);
             btnTabInvoices.setTextColor(0xFF090D16);
             btnTabClients.setBackgroundColor(0xFF1E293B);
             btnTabClients.setTextColor(0xFFF8FAFC);
+            btnTabWebAdmin.setBackgroundColor(0xFF1E293B);
+            btnTabWebAdmin.setTextColor(0xFFF8FAFC);
+
+            layoutWebAdmin.setVisibility(View.GONE);
+            swipeRefresh.setVisibility(View.VISIBLE);
+            fabQuickAuth.setVisibility(View.VISIBLE);
             rvList.setAdapter(invoiceAdapter);
             updateEmptyView();
         });
 
+        btnTabWebAdmin.setOnClickListener(v -> {
+            isWebTab = true;
+            btnTabWebAdmin.setBackgroundColor(0xFF38BDF8);
+            btnTabWebAdmin.setTextColor(0xFF090D16);
+            btnTabClients.setBackgroundColor(0xFF1E293B);
+            btnTabClients.setTextColor(0xFFF8FAFC);
+            btnTabInvoices.setBackgroundColor(0xFF1E293B);
+            btnTabInvoices.setTextColor(0xFFF8FAFC);
+
+            swipeRefresh.setVisibility(View.GONE);
+            tvEmpty.setVisibility(View.GONE);
+            fabQuickAuth.setVisibility(View.GONE);
+            layoutWebAdmin.setVisibility(View.VISIBLE);
+
+            if (webViewAdmin.getUrl() == null || webViewAdmin.getUrl().isEmpty()) {
+                if (ApiClient.baseUrl.contains("192.168.") || ApiClient.baseUrl.contains(".local")) {
+                    loadRouterWeb();
+                } else {
+                    loadCloudWeb();
+                }
+            }
+        });
+
         swipeRefresh.setOnRefreshListener(this::loadData);
-        btnRefresh.setOnClickListener(v -> loadData());
+        btnRefresh.setOnClickListener(v -> {
+            if (isWebTab) {
+                webViewAdmin.reload();
+            } else {
+                loadData();
+            }
+        });
 
         btnLogout.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
@@ -263,6 +410,17 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         autoSyncHandler.postDelayed(autoSyncRunnable, 12000);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (isWebTab && webViewAdmin != null && webViewAdmin.canGoBack()) {
+            webViewAdmin.goBack();
+        } else if (isWebTab) {
+            btnTabClients.performClick();
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
