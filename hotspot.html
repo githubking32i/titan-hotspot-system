@@ -821,6 +821,22 @@
           </div>
         </div>
 
+        <!-- Newly Generated Vouchers Banner -->
+        <div id="newVouchersContainer" style="display: none; background: linear-gradient(135deg, rgba(2, 132, 199, 0.2), rgba(16, 185, 129, 0.15)); border: 2px solid #0284c7; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 1.05rem; font-weight: 800; color: #38bdf8;">
+              🎉 নতুন তৈরি করা ভাউচার কোডগুলো:
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" onclick="copyAllNewCodes()">📋 সব কোড একসাথে কপি</button>
+              <button class="btn btn-primary btn-sm" onclick="printVouchers()">🖨️ এখনই প্রিন্ট করুন</button>
+            </div>
+          </div>
+          <div id="newCodesPills" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 4px;">
+            <!-- Generated codes will appear here -->
+          </div>
+        </div>
+
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div style="font-size: 0.9rem; font-weight: 700;">সংরক্ষিত ভাউচার তালিকা</div>
           <div style="display: flex; gap: 8px;">
@@ -1145,9 +1161,10 @@
 
     async function sendApi(action, payload = {}) {
       try {
-        const res = await fetch('/cgi-bin/hotspot-api', {
+        const res = await fetch('/cgi-bin/hotspot-api?_t=' + Date.now(), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
           body: JSON.stringify({ action, ...payload })
         });
         return await res.json();
@@ -1520,10 +1537,35 @@
       document.getElementById('statVoucherCount').innerText = `${completedCount} টি সফল ভাউচার পেমেন্ট`;
     }
 
+    let latestGeneratedCodes = [];
+
+    function showNewVouchers(codes) {
+      latestGeneratedCodes = codes || [];
+      const container = document.getElementById('newVouchersContainer');
+      const pillsDiv = document.getElementById('newCodesPills');
+      if (!codes || codes.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+      pillsDiv.innerHTML = codes.map(c => `
+        <div style="background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 8px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 8px;">
+          <span style="font-family: monospace; font-size: 1.15rem; font-weight: 800; color: #38bdf8; letter-spacing: 1.5px;">${c}</span>
+          <button class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.72rem;" onclick="copyToClipboard('${c}')">📋 কপি PIN</button>
+        </div>
+      `).join('');
+      container.style.display = 'block';
+    }
+
+    function copyAllNewCodes() {
+      if (!latestGeneratedCodes || latestGeneratedCodes.length === 0) return;
+      copyToClipboard(latestGeneratedCodes.join('\n'));
+      showToast('সবগুলো নতুন ভাউচার কোড ক্লিপবোর্ডে কপি করা হয়েছে');
+    }
+
     /* Render Vouchers Table */
     function renderVouchers() {
       if (!globalData) return;
-      const vouchers = Array.isArray(globalData.vouchers) ? globalData.vouchers : [];
+      const vouchers = Array.isArray(globalData.vouchers) ? [...globalData.vouchers].reverse() : [];
       document.getElementById('tabVouchersBadge').innerText = vouchers.length;
       document.getElementById('voucherCountBadge').innerText = `${vouchers.length} Vouchers`;
 
@@ -1537,13 +1579,17 @@
             ? '<span class="badge badge-success">🟢 অব্যবহৃত (বিক্রয়যোগ্য)</span>'
             : '<span class="badge badge-warning">🔴 ব্যবহৃত</span>';
 
+          const isNewlyCreated = latestGeneratedCodes.includes(v.code);
+          const newBadge = isNewlyCreated ? '<span class="badge badge-purple" style="font-size:0.68rem; margin-left:6px;">🆕 নতুন</span>' : '';
+
           const speedBadge = formatSpeedCap(v.down_kbps, v.up_kbps);
           const durText = v.minutes >= 1440 ? `${Math.round(v.minutes/1440)} দিন` : `${Math.round(v.minutes/60)} ঘণ্টা`;
 
           rowsHtml += `
-            <tr>
+            <tr ${isNewlyCreated ? 'style="background: rgba(56, 189, 248, 0.1); border-left: 3px solid #38bdf8;"' : ''}>
               <td>
                 <span class="code-pill" style="font-size: 1rem; font-weight: 800; letter-spacing: 1px;" onclick="copyToClipboard('${v.code}')">${v.code}</span>
+                ${newBadge}
               </td>
               <td>
                 <div style="font-weight: 700;">${durText}</div>
@@ -1579,7 +1625,10 @@
         upload_rate: upRate
       });
       showToast(res.message || 'ভাউচার তৈরি সম্পন্ন');
-      fetchData();
+      if (res && res.codes && res.codes.length > 0) {
+        showNewVouchers(res.codes);
+      }
+      await fetchData();
     }
 
     async function clearUsedVouchers() {
@@ -1630,7 +1679,7 @@
     /* Fetch Live Data */
     async function fetchData() {
       try {
-        const res = await fetch('/cgi-bin/hotspot-api');
+        const res = await fetch('/cgi-bin/hotspot-api?_t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         globalData = data;
 

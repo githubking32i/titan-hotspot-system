@@ -3,6 +3,9 @@ echo "Content-Type: application/json"
 echo "Access-Control-Allow-Origin: *"
 echo "Access-Control-Allow-Methods: GET, POST, OPTIONS"
 echo "Access-Control-Allow-Headers: Content-Type"
+echo "Cache-Control: no-store, no-cache, must-revalidate, max-age=0"
+echo "Pragma: no-cache"
+echo "Expires: 0"
 echo ""
 
 if [ "$REQUEST_METHOD" = "OPTIONS" ]; then
