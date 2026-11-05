@@ -26,6 +26,18 @@ send_telegram() {
 }
 
 sync_walled_garden() {
+    # Ensure BDIX speed limit bypass rules are always active in OpenNDS rate limiter chains
+    if nft list chain ip nds_mangle ndsDLR >/dev/null 2>&1; then
+        if ! nft list chain ip nds_mangle ndsDLR 2>/dev/null | grep -q "103.0.0.0/8"; then
+            nft insert rule ip nds_mangle ndsDLR ip saddr { 10.0.0.0/8, 45.112.0.0/14, 45.120.0.0/14, 103.0.0.0/8, 172.16.0.0/12, 180.211.208.0/21 } counter return 2>/dev/null
+        fi
+    fi
+    if nft list chain ip nds_filter ndsULR >/dev/null 2>&1; then
+        if ! nft list chain ip nds_filter ndsULR 2>/dev/null | grep -q "103.0.0.0/8"; then
+            nft insert rule ip nds_filter ndsULR ip daddr { 10.0.0.0/8, 45.112.0.0/14, 45.120.0.0/14, 103.0.0.0/8, 172.16.0.0/12, 180.211.208.0/21 } counter return 2>/dev/null
+        fi
+    fi
+
     if nft list set ip nds_filter walledgarden >/dev/null 2>&1; then
         for ip in $(nslookup "$PORTAL_DOMAIN" 1.1.1.1 2>/dev/null | grep Address | awk '{print $2}' | grep -E '^[0-9]'); do
             nft add element ip nds_filter walledgarden { "$ip" } 2>/dev/null
